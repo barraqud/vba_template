@@ -3,16 +3,16 @@ Option Explicit
 
 Public Components As Collection
 
-Private Const DirExclude = "Dev"
+Private Const DirExclude = "Dev;_key"
 
-Private self As vbide.VBProject
+Private Self As vbide.VBProject
 Private Path As String
 Private Extension As String
 
 Private Function SetModuleDir(Line As String) As String
     Dim Match As String
     Dim Re As New clsRE
-    Re.Init "\'\@Folder\(\""(.+)\""\)", False, True
+    Re.init "\'\@Folder\(\""(.+)\""\)", False, True
     If Not Re.TestString(Line) Then Exit Function
     On Error GoTo BeforeExit
     Match = Re.ExecuteString(Line).Item(0).submatches.Item(0)
@@ -30,14 +30,14 @@ Private Function SetModuleExt(ByVal vbMod As VBComponent) As String
 End Function
 
 Private Function GetModuleByName(moduleName As String) As vbide.CodeModule
-    Dim Project As vbide.VBProject
-    Dim curr As Variant
-    Set Project = ActiveWorkbook.VBProject
-    For Each curr In Project.VBComponents
-        If curr.name = moduleName And ( _
-           curr.Type = vbext_ct_ClassModule Or curr.Type = vbext_ct_StdModule Or curr.Type = vbext_ct_MSForm _
+    Dim project As vbide.VBProject
+    Dim Curr As Variant
+    Set project = ActiveWorkbook.VBProject
+    For Each Curr In project.VBComponents
+        If Curr.Name = moduleName And ( _
+           Curr.Type = vbext_ct_ClassModule Or Curr.Type = vbext_ct_StdModule Or Curr.Type = vbext_ct_MSForm _
            ) Then
-            Set GetModuleByName = curr.CodeModule
+            Set GetModuleByName = Curr.CodeModule
             Exit For
         End If
     Next
@@ -72,7 +72,7 @@ Public Function Find(vbMod As vbide.CodeModule, search As String, Optional start
     
     With vbMod
         For i = startPos To .CountOfLines
-            If Re.test(.Lines(i, 1)) Then
+            If Re.Test(.Lines(i, 1)) Then
                 Find = i
                 Exit For
             End If
@@ -96,8 +96,8 @@ Private Sub Class_Initialize()
     Dim content As String
     Dim vMod As Variant
     Set Components = New Collection
-    Set self = ActiveWorkbook.VBProject
-    For Each vMod In self.VBComponents
+    Set Self = ActiveWorkbook.VBProject
+    For Each vMod In Self.VBComponents
         If vMod.Type = vbext_ct_ClassModule Or vMod.Type = vbext_ct_StdModule Or vMod.Type = vbext_ct_MSForm Then
             With vMod.CodeModule
                 content = .Lines(1, .CountOfLines)
@@ -105,7 +105,7 @@ Private Sub Class_Initialize()
             Dir = SetModuleDir(content)
             If DirPass(Dir) Then GoTo Continue
             Set dict = New Dictionary
-            dict.Add "path", Dir & vMod.name & SetModuleExt(vMod)
+            dict.Add "path", Dir & vMod.Name & SetModuleExt(vMod)
             dict.Add "content", content
             dict.Add "mode", "100644"
             dict.Add "type", "blob"

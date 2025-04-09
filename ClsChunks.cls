@@ -4,8 +4,8 @@ Option Explicit
 Public chunks As New Dictionary
 Private p_range As Range
 
-Public Property Get Count() As Long
-    Count = chunks.Count
+Public Property Get count() As Long
+    count = chunks.count
 End Property
 
 Private Sub Class_Initialize()
@@ -15,23 +15,23 @@ Private Sub Class_Initialize()
     Set p_range = RangeExclude(headerRng.CurrentRegion, headerRng)
 End Sub
 
-Sub Init(ColNum As Long, Optional ColSize As Long)
+Sub init(ColNum As Long, Optional ColSize As Long)
     Dim FilterRng As Range
     Dim ChunkRng As Range
-    Dim lastrow As Long, i As Long
+    Dim lastRow As Long, i As Long
 
     With p_range
-        lastrow = .Rows.Count + .row - 1
+        lastRow = .Rows.count + .row - 1
         'note: counts rm columns from 1
         Set FilterRng = .Columns(ColNum)
         If ColSize > 1 Then Set FilterRng = FilterRng.Resize(ColumnSize:=ColSize)
         With FilterRng.SpecialCells(xlCellTypeConstants, 7)
 
-            For i = .Areas.Count To 1 Step -1
-                Set ChunkRng = .Areas(i).Resize(lastrow - .Areas(i).row + 1, p_range.Columns.Count)
+            For i = .Areas.count To 1 Step -1
+                Set ChunkRng = .Areas(i).Resize(lastRow - .Areas(i).row + 1, p_range.Columns.count)
                 Call Add(ChunkRng)
 
-                lastrow = .Areas(i).row - 1
+                lastRow = .Areas(i).row - 1
             Next
         End With
     End With
@@ -42,8 +42,8 @@ Private Sub Add(ChunkRng As Range)
     ChunkNew.ID = ChunkRng.Cells(1).Value2
     If chunks.Exists(ChunkNew.ID) Then GoTo MergeChunks
     ChunkNew.Range = ChunkRng
-    ChunkNew.value = ChunkRng.Value2
-    '    If Not ChunkNew Is Nothing Then
+    ChunkNew.Value = ChunkRng.Value2
+    'If Not ChunkNew Is Nothing Then
     chunks.Add ChunkNew.ID, ChunkNew
     Exit Sub
 MergeChunks:

@@ -18,7 +18,7 @@ Private Sub DrawGroup(UF As UserForm, Title As String, Blocks As Dictionary)
 
 Dim block As Variant
     With UF.Controls
-        For Each block In Blocks.Keys
+        For Each block In Blocks.keys
             block
         Next
     End With
@@ -27,8 +27,8 @@ End Sub
 
 Private Sub DrawColumn(UF As UserForm)
     Dim dataOpts As Dictionary
-    Dim Elem As Variant
+    Dim elem As Variant
     Set dataOpts = HeaderParse
-    Debug.Print Join(dataOpts.Keys, vbNewLine)
+    Debug.Print Join(dataOpts.keys, vbNewLine)
 End Sub
 

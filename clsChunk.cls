@@ -3,16 +3,16 @@ Option Explicit
 
 Public ID As String
 Public Range As Range
-Public value As Variant
+Public Value As Variant
 
-Public Property Get Count() As Long
-    Count = Me.Range.Rows.Count
+Public Property Get count() As Long
+    count = Me.Range.Rows.count
 End Property
 
 Public Sub Create(ChunkRng As Range)
     With Me
         .ID = ChunkRng.Cells(1).Value2
         Set .Range = ChunkRng
-        .value = ChunkRng.Value2
+        .Value = ChunkRng.Value2
     End With
 End Sub

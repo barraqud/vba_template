@@ -3,7 +3,7 @@ Option Explicit
 
 Private this As RegExp
 
-Public Sub Init(Pattern As String, Optional isGlobal As Boolean = True, Optional IgnoreCase As Boolean = False)
+Public Sub init(Pattern As String, Optional isGlobal As Boolean = True, Optional IgnoreCase As Boolean = False)
     Set this = New RegExp
     With this
         .Pattern = Pattern
@@ -13,14 +13,14 @@ Public Sub Init(Pattern As String, Optional isGlobal As Boolean = True, Optional
 End Sub
 
 Public Function TestString(ByVal sourceString As String) As Boolean
-    TestString = this.test(sourceString)
+    TestString = this.Test(sourceString)
 End Function
 
 Public Function TestArray(ByVal sourceArray As Variant, Optional getIdx As Boolean = False) As Variant
     Dim outputArr As Variant
     Dim i As Long
     For i = LBound(sourceArray) To UBound(sourceArray)
-        If Not this.test(sourceArray(i)) Then GoTo Continue
+        If Not this.Test(sourceArray(i)) Then GoTo Continue
         If IsEmpty(outputArr) Then
             ReDim outputArr(1 To 1)
         Else
@@ -41,7 +41,7 @@ Public Function ExecuteArray(ByVal sourceArray As Variant) As Variant
     Dim outputArr As Variant
     Dim i As Long
     For i = LBound(sourceArray) To UBound(sourceArray)
-        If Not this.test(sourceArray(i)) Then GoTo Continue
+        If Not this.Test(sourceArray(i)) Then GoTo Continue
         If IsEmpty(outputArr) Then
             ReDim outputArr(1 To 1)
         Else
