@@ -3,7 +3,7 @@ Option Explicit
 
 Private this As RegExp
 
-Public Sub init(Pattern As String, Optional isGlobal As Boolean = True, Optional IgnoreCase As Boolean = False)
+Public Sub Init(Pattern As String, Optional isGlobal As Boolean = True, Optional IgnoreCase As Boolean = False)
     Set this = New RegExp
     With this
         .Pattern = Pattern
@@ -17,7 +17,7 @@ Public Function TestString(ByVal sourceString As String) As Boolean
 End Function
 
 Public Function TestArray(ByVal sourceArray As Variant, Optional getIdx As Boolean = False) As Variant
-    Dim outputArr As Variant
+    Dim outputArr() As Variant
     Dim i As Long
     For i = LBound(sourceArray) To UBound(sourceArray)
         If Not this.Test(sourceArray(i)) Then GoTo Continue

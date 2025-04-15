@@ -3,31 +3,30 @@ Option Explicit
 Private WithEvents PagesList As MSForms.MultiPage
 Private WithEvents successBtn As MSForms.CommandButton
 Private TemplateTitle As String
-Private elements As Variant
+Private elements() As Variant
 Private Filename As String
 
 Private Sub successBtn_Click()
     Dim ctrl As clsUfTemplRow
-    Dim Curr As Variant
+    Dim curr As Variant
     Dim output() As Variant
     ReDim output(1 To UBound(elements))
     Dim i As Long, j As Long, lastCol As Long
     For i = 1 To UBound(output)
         Set ctrl = elements(i)
         If lastCol < ctrl.ParseModArg.count + 4 Then lastCol = ctrl.ParseModArg.count + 4
-        ReDim Curr(1 To lastCol)
+        ReDim curr(1 To lastCol)
         If ctrl.ParseModArg.count = 0 Then GoTo Continue
-        Curr(1) = TemplateTitle
-        Curr(2) = ctrl.Title
-        Curr(3) = ctrl.Func
-        Curr(4) = ctrl.InitColumn
+        curr(1) = TemplateTitle
+        curr(2) = ctrl.Title
+        curr(3) = ctrl.Func
+        curr(4) = ctrl.InitColumn
         For j = 1 To ctrl.ParseModArg.count
-            Curr(j + 4) = ctrl.ParseModArg.Items(j - 1)
+            curr(j + 4) = ctrl.ParseModArg.Items(j - 1)
         Next
 Continue:
-        output(i) = Curr
+        output(i) = curr
     Next
-    
 End Sub
 
 Private Sub UserForm_Initialize()
@@ -40,7 +39,7 @@ Private Sub UserForm_Initialize()
 End Sub
 
 Public Sub DrawTemplate(Title As String, VarDict As Dictionary)
-    Dim row As clsUfTemplRow
+    Dim Row As clsUfTemplRow
     Dim i As Long, j As Long
     Dim VarName As Variant
     Dim Table As Variant
@@ -53,11 +52,11 @@ Public Sub DrawTemplate(Title As String, VarDict As Dictionary)
             Set CurrPage = PagesList.Pages.Add("Vars_1", "Переменные " & 1, 0)
             If Not VarDict.Exists("Variables") Then GoTo NoVariables
             ReDim elements(1 To VarDict("Variables").count)
-            For Each VarName In VarDict("Variables").keys
-                Set row = New clsUfTemplRow
-                row.init CurrPage, VarName, Join(Array("Var", VarDict("Variables")(VarName), i), "_"), i
+            For Each VarName In VarDict("Variables").Keys
+                Set Row = New clsUfTemplRow
+                Row.Init CurrPage, VarName, Join(Array("Var", VarDict("Variables")(VarName), i), "_"), i
                 i = i + 1
-                Set elements(i) = row
+                Set elements(i) = Row
             Next
             
 NoVariables:
@@ -70,11 +69,11 @@ NoVariables:
                 Else
                     ReDim Preserve elements(1 To UBound(elements) + Table.count)
                 End If
-                For Each VarName In Table.keys
-                    Set row = New clsUfTemplRow
-                    row.init CurrPage, VarName, Join(Array("Table", j, Table(VarName), i), "_"), Table(VarName)
+                For Each VarName In Table.Keys
+                    Set Row = New clsUfTemplRow
+                    Row.Init CurrPage, VarName, Join(Array("Table", j, Table(VarName), i), "_"), Table(VarName)
                     i = i + 1
-                    Set elements(i) = row
+                    Set elements(i) = Row
                 Next
             Next
 NoTables:
@@ -91,14 +90,15 @@ End Sub
 Sub ReadTemplates()
     Dim templ As New clsTemplate
     Dim dict As Dictionary
-    Dim Title As String
     
     On Error GoTo BeforeExit
-    templ.init
-    Set dict = templ.Parse
-    '    Set dict = MockTemplate
+'    templ.Import
+'    TemplateTitle = templ.Name
+'    Set dict = templ.ParseFile
+        TemplateTitle = "Мок"
+        Set dict = MockTemplate
     With ufTemplate
-        .DrawTemplate Title, dict
+        .DrawTemplate TemplateTitle, dict
         .Show vbModal
     End With
 BeforeExit:

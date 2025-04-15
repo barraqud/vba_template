@@ -38,7 +38,7 @@ End Sub
 Public Function MainDataHeaderToDict() As Dictionary
     Dim headerRng As Range
     Dim HeaderArr As Variant
-    Set headerRng = RangeGroupMerged(ShtMainData.Cells(1).CurrentRegion)
+    Set headerRng = RangeGetMerged(ShtMainData.Cells(1).CurrentRegion)
     HeaderArr = headerRng.Value2
     Set MainDataHeaderToDict = ArrayToDictByCol(HeaderArr)
 End Function
@@ -46,36 +46,36 @@ End Function
 '=========================================================== WRAPPERS ===========================================================
 'Обертка для запуска скриптов
 'Первые 10 аргументов передаются
-Public Sub ScriptRunner(ByVal SubName As String, isInitial As Boolean, ParamArray Args() As Variant)
+Public Sub ScriptRunner(ByVal SubName As String, isInitial As Boolean, ParamArray args() As Variant)
     Dim i As Long
     On Error Resume Next
-    i = UBound(Args) - LBound(Args) + 1
+    i = UBound(args) - LBound(args) + 1
     If Err.Number <> 0 Then Err.Clear
     On Error GoTo BeforeExit
     If isInitial Then SwitchAutomation
     Select Case True
-    Case IsMissing(Args)
+    Case IsMissing(args)
         Application.Run SubName
     Case i = 10
-        Application.Run SubName, Args(0), Args(1), Args(2), Args(3), Args(4), Args(5), Args(6), Args(7), Args(8), Args(9)
+        Application.Run SubName, args(0), args(1), args(2), args(3), args(4), args(5), args(6), args(7), args(8), args(9)
     Case i = 9
-        Application.Run SubName, Args(0), Args(1), Args(2), Args(3), Args(4), Args(5), Args(6), Args(7), Args(8)
+        Application.Run SubName, args(0), args(1), args(2), args(3), args(4), args(5), args(6), args(7), args(8)
     Case i = 8
-        Application.Run SubName, Args(0), Args(1), Args(2), Args(3), Args(4), Args(5), Args(6), Args(7)
+        Application.Run SubName, args(0), args(1), args(2), args(3), args(4), args(5), args(6), args(7)
     Case i = 7
-        Application.Run SubName, Args(0), Args(1), Args(2), Args(3), Args(4), Args(5), Args(6)
+        Application.Run SubName, args(0), args(1), args(2), args(3), args(4), args(5), args(6)
     Case i = 6
-        Application.Run SubName, Args(0), Args(1), Args(2), Args(3), Args(4), Args(5)
+        Application.Run SubName, args(0), args(1), args(2), args(3), args(4), args(5)
     Case i = 5
-        Application.Run SubName, Args(0), Args(1), Args(2), Args(3), Args(4)
+        Application.Run SubName, args(0), args(1), args(2), args(3), args(4)
     Case i = 4
-        Application.Run SubName, Args(0), Args(1), Args(2), Args(3)
+        Application.Run SubName, args(0), args(1), args(2), args(3)
     Case i = 3
-        Application.Run SubName, Args(0), Args(1), Args(2)
+        Application.Run SubName, args(0), args(1), args(2)
     Case i = 2
-        Application.Run SubName, Args(0), Args(1)
+        Application.Run SubName, args(0), args(1)
     Case i = 1
-        Application.Run SubName, Args(0)
+        Application.Run SubName, args(0)
     Case Else
         Err.Raise vbObjectError + 500, "ScriptRunner", ">10 args"
     End Select
@@ -94,8 +94,8 @@ Public Sub Stopwatch(ByVal SubName As String, ParamArray SubArguments() As Varia
 End Sub
 
 'Обертка для запуска модификаторов
-Public Function FnWrap(ByVal FnName As String, ByVal arr As Variant, ByVal Args As Variant) As Variant
-    FnWrap = Application.Run(FnName, arr, Args)
+Public Function FnWrap(ByVal FnName As String, ByVal arr As Variant, ByVal args As Variant) As Variant
+    FnWrap = Application.Run(FnName, arr, args)
 End Function
 
 '=========================================================== UserForm ===========================================================
@@ -104,21 +104,28 @@ Public Function isControlEmpty(Control As Object) As Boolean
     isControlEmpty = (Len(Trim(Control.Value)) = 0)
 End Function
 
-Public Function ControlCreate(Parent As Variant, bType As String, Width As Long, Height As Long, Optional IdxVert As Long = 0, Optional IdxHoriz As Long = 0, Optional TopOffset As Long = 0, Optional LeftOffset As Long = 0, Optional placeHolder As String) As Variant
+Public Function ControlCreate(Parent As Variant, bType As String, Name As String, Width As Long, Height As Long, _
+                              Optional IdxVert As Long = 0, Optional IdxHoriz As Long = 0, _
+                              Optional TopOffset As Long = 0, Optional LeftOffset As Long = 0, Optional CaptText As String) As MSForms.Control
+    If InStr(bType, "Frame;TextBox;CheckBox;ComboBox;CommandButton;Page") <> 0 Then
+        MsgBox "Неверный тип формы: " & bType
+    End If
+    Dim ctrl As MSForms.Control
     With Parent.Controls
-        Set ControlCreate = .Add("Forms." & m_BlockType & ".1", Join(Array(m_BlockType, Name, IdxVert, IdxHoriz), "_"))
-        CtrlDefaultParams ControlCreate, Width, Height, TopOffset + (Height + 10) * IdxVert, LeftOffset + (Width + 10) * IdxHoriz, placeHolder, IdxVert
+        Set ctrl = .Add("Forms." & bType & ".1", Join(Array(bType, Name, IdxVert, IdxHoriz), "_"), True)
+        CtrlDefaultParams ctrl, Width, Height, TopOffset + ((Height + 10) * IdxVert), LeftOffset + ((Width + 10) * IdxHoriz), CaptText, IdxVert
     End With
+    Set ControlCreate = ctrl
 End Function
 
-Public Sub CtrlDefaultParams(ctrl As Object, ByVal Width As Long, ByVal Height As Long, Optional ByVal Top As Long, Optional ByVal Left As Long, Optional ByVal Caption As String = vbNullString, Optional ByVal Tag As String = vbNullString)
+Public Sub CtrlDefaultParams(ctrl As Variant, ByVal Width As Long, ByVal Height As Long, Optional ByVal Top As Long, Optional ByVal Left As Long, Optional ByVal Caption As String = vbNullString, Optional ByVal Tag As String = vbNullString)
     On Error Resume Next
     With ctrl
         .Top = Top
         .Left = Left
         .Height = Height
         .Width = Width
-        .wrap = True
+        .Wrap = True
         .Caption = Caption
         .BackColor = BACKGRAY
         .ForeColor = FOREGRAY
@@ -128,15 +135,19 @@ Public Sub CtrlDefaultParams(ctrl As Object, ByVal Width As Long, ByVal Height A
         .BorderStyle = fmBorderStyleNone
         .KeepScrollBarsVisible = fmScrollBarsNone
         .ListWidth = 400                         'combobox ширина выпадающего списка
-        .StartUpPosition = 1
+        If TypeOf ctrl Is UserForm Then
+            .StartUpPosition = 1
+        Else
+            .ZOrder = fmZOrderFront
+        End If
     End With
     On Error GoTo 0
 End Sub
 
-Public Function AddTextBox(wrap As Variant, Name As String, Index As Long, Optional Width As Long = 60, Optional Height As Long = 20, Optional Left As Long = 80, Optional helper As String, Optional isDropDown As Boolean = False) As MSForms.textBox
-    Dim placeHolder As MSForms.textBox
-    Dim Box As MSForms.textBox
-    With wrap
+Public Function AddTextBox(Wrap As Variant, Name As String, Index As Long, Optional Width As Long = 60, Optional Height As Long = 20, Optional Left As Long = 80, Optional helper As String, Optional isDropDown As Boolean = False) As MSForms.TextBox
+    Dim placeHolder As MSForms.TextBox
+    Dim Box As MSForms.TextBox
+    With Wrap
         Set placeHolder = .Controls.Add("Forms.TextBox.1", "Placeholder_" & Name)
         CtrlDefaultParams placeHolder, Width, Height, Index * 30 + 10, Left, , Index
         placeHolder.text = helper
@@ -224,17 +235,17 @@ End Function
 'Проходит по первому ряду и возвращает весь range заголовка(включая объединения)
 Public Function RangeGetMerged(rng As Range) As Range
     Dim col As Long
-    Dim row As Long
+    Dim Row As Long
     With rng
         With .Rows(1)
             For col = 1 To .Columns.count
                 If Not .Columns(col).MergeCells Then GoTo Continue
                 col = col + .Columns(col).MergeArea.Columns.count - 1
-                If .Columns(col).MergeArea.Rows.count > row Then row = .Columns(col).MergeArea.Rows.count
+                If .Columns(col).MergeArea.Rows.count > Row Then Row = .Columns(col).MergeArea.Rows.count
 Continue:
             Next
         End With
-        Set RangeGetMerged = .Range(.Cells(1, 1), .Cells(row, col - 1))
+        Set RangeGetMerged = .Range(.Cells(1, 1), .Cells(Row, col - 1))
     End With
 End Function
 
@@ -254,11 +265,11 @@ End Sub
 '=========================================================== FILE ===========================================================
 'Если AskUser=True то спрашивает где сохранить файл(при отмене укажет путь в текущую папку)
 Public Function FileNameCreate(Optional ByVal Filename As String, Optional AskUser As Boolean = False, Optional Title As String = "Выберите путь для сохранения") As String
-    Dim Dir As FileDialog
+    Dim dir As FileDialog
     Dim sItem As String
     If AskUser = True Then
-        Set Dir = Application.FileDialog(msoFileDialogFolderPicker)
-        With Dir
+        Set dir = Application.FileDialog(msoFileDialogFolderPicker)
+        With dir
             .Title = Title
             .AllowMultiSelect = False
             .InitialFileName = FilePathCurrent(Filename)
@@ -269,15 +280,15 @@ Public Function FileNameCreate(Optional ByVal Filename As String, Optional AskUs
         End With
     End If
 NoPath:
-    Set Dir = Nothing
+    Set dir = Nothing
     FileNameCreate = FilePathCurrent(Filename)
 End Function
 
 Public Function FilePathCurrent(Optional Filename As String) As String
-    Dim Path As String
-    Path = ThisWorkbook.Path
-    If Len(Filename) > 0 Then Path = Path & "\" & Filename
-    FilePathCurrent = Application.Clean(Path)
+    Dim path As String
+    path = ThisWorkbook.path
+    If Len(Filename) > 0 Then path = path & "\" & Filename
+    FilePathCurrent = Application.Clean(path)
 End Function
 
 '=========================================================== Chunks ===========================================================
@@ -289,19 +300,19 @@ Public Function ChunksParse(rng As Range, ColNum As Long, Optional ColSize As Lo
     Dim lastRow As Long, i As Long
 
     With rng
-        lastRow = .Rows.count + .row - 1
+        lastRow = .Rows.count + .Row - 1
         'note: counts rm columns from 1
         Set FilterRng = .Columns(ColNum)
         If ColSize > 1 Then Set FilterRng = FilterRng.Resize(ColumnSize:=ColSize)
         With FilterRng.SpecialCells(xlCellTypeConstants, 7)
 
             For i = .Areas.count To 1 Step -1
-                Set ChunkRng = .Areas(i).Resize(lastRow - .Areas(i).row + 1, rng.Columns.count)
+                Set ChunkRng = .Areas(i).Resize(lastRow - .Areas(i).Row + 1, rng.Columns.count)
                 Set Chunk = New clsChunk
                 Chunk.Create ChunkRng
                 If ChunksParse.Exists(Chunk.ID) Then GoTo ChunksDuplicated
                 ChunksParse.Add Chunk.ID, Chunk
-                lastRow = .Areas(i).row - 1
+                lastRow = .Areas(i).Row - 1
             Next
         End With
     End With
@@ -312,6 +323,12 @@ ChunksDuplicated:
     MsgBox Join(Array("Есть несколько РМ с одним ID", ChunkRng.Address, oldChunk.Range.Address), vbNewLine), Title:="Дублирование РМ"
 End Function
 
+'
+Public Function ChunksByColumn(Optional ByVal ColNum As Long = 1) As Dictionary
+    Dim dataRng As Range
+    Set dataRng = RangeMainData
+    Set ChunksByColumn = ChunksParse(dataRng, ColNum)
+End Function
 '=========================================================== ARRAY ===========================================================
 Public Function ArrayLen(ByRef arr As Variant) As Long
     LenArray = UBound(arr) - LBound(arr) + 1
@@ -351,7 +368,7 @@ Public Function ArrayTranspose(arr As Variant) As Variant
     Dim j As Long
     
     outputArr = ArrayTryFlat(arr)
-    On Error GoTo Done
+    On Error GoTo done
     If UBound(outputArr, 2) <> LBound(outputArr, 2) Then ReDim outputArr(LBound(arr, 2) To UBound(arr, 2), LBound(arr, 1) To UBound(arr, 1))
     
     For i = LBound(outputArr, 1) To UBound(outputArr, 1)
@@ -359,7 +376,7 @@ Public Function ArrayTranspose(arr As Variant) As Variant
             outputArr(i, j) = arr(j, i)
         Next
     Next
-Done:
+done:
     ArrayTranspose = outputArr
 End Function
 
@@ -367,7 +384,7 @@ End Function
 Public Function ArrayTryFlat(arr As Variant) As Variant
     Dim outputArr() As Variant
     Dim i As Long
-    On Error GoTo Done
+    On Error GoTo done
     If UBound(arr, 2) - LBound(arr, 2) = 0 Then
         ReDim outputArr(LBound(arr, 1) To UBound(arr, 1))
         For i = LBound(arr, 1) To UBound(arr, 1)
@@ -379,14 +396,14 @@ Public Function ArrayTryFlat(arr As Variant) As Variant
             outputArr(i) = arr(1, i)
         Next
     Else
-Done:
+done:
         ArrayTryFlat = arr
         Exit Function
     End If
     ArrayTryFlat = outputArr
 End Function
 
-Public Function Array2DSlice(ByRef arr As Variant, dimention As EDimention, idx As Long) As Variant
+Public Function Array2DSlice(ByRef arr As Variant, dimention As EDimention, Idx As Long) As Variant
     Dim outputArr As Variant
     Dim i As Long
     Dim diff As Long
@@ -394,9 +411,9 @@ Public Function Array2DSlice(ByRef arr As Variant, dimention As EDimention, idx 
     ReDim outputArr(1 To UBound(arr, dimention) + diff)
     For i = 1 To UBound(outputArr)
         If dimention = ERow Then
-            outputArr(i) = arr(idx, i)
+            outputArr(i) = arr(Idx, i)
         Else
-            outputArr(i) = arr(i, idx)
+            outputArr(i) = arr(i, Idx)
         End If
     Next
     Array2DSlice = outputArr
@@ -407,19 +424,19 @@ Public Function ArrayUpdateColumns(arr As Variant, ByVal FnDict As Dictionary) A
     Dim i As Long
     Dim colIdx As Variant
     Dim offset As Long
-    Dim Done As New Dictionary
+    Dim done As New Dictionary
     If FnDict.count = 0 Then
         ArrayUpdateColumns = arr
         Exit Function
     End If
     ReDim outputArr(LBound(arr) To UBound(arr))
     For i = LBound(outputArr) To UBound(outputArr)
-        If FnDict.Exists(i) And Not Done.Exists(i) Then
-            outputArr(i + offset) = Application.Run(FnDict(i)("Name"), arr, FnDict(i)("Args"))
+        If FnDict.Exists(i) And Not done.Exists(i) Then
+            outputArr(i + offset) = Application.Run(FnDict(i)("Name"), arr, FnDict(i)("ColNum"), FnDict(i)("Args"))
             If FnDict(i)("NewCol") Then
                 offset = offset + 1
                 ReDim Preserve outputArr(LBound(arr) To UBound(arr) + offset)
-                Done.Add i, True
+                done.Add i, True
                 i = i - 1
             End If
         Else
@@ -429,7 +446,7 @@ Public Function ArrayUpdateColumns(arr As Variant, ByVal FnDict As Dictionary) A
 
     Next
 BeforeExit:
-    Done.RemoveAll
+    done.RemoveAll
     Err.Clear
     On Error GoTo 0
     ArrayUpdateColumns = outputArr
@@ -461,19 +478,19 @@ Public Function Array2DToDictByCol(arr As Variant) As Dictionary
     Dim outputDict As New Dictionary
     Dim dict As Dictionary
     Dim col As Long
-    Dim row As Long
+    Dim Row As Long
     Dim Title As Variant
     
     For col = 1 To UBound(arr, 2)
         If Not IsEmpty(arr(1, col)) Then Title = arr(1, col)
-        For row = 1 To UBound(arr, 1)
-            If IsEmpty(arr(row, col)) Then GoTo Continue2
+        For Row = 1 To UBound(arr, 1)
+            If IsEmpty(arr(Row, col)) Then GoTo Continue2
             If Not outputDict.Exists(Title) Then
                 Set dict = New Dictionary
             Else
                 Set dict = outputDict(Title)
             End If
-            If Not dict.Exists(arr(row, col)) Then dict.Add arr(row, col), col
+            If Not dict.Exists(arr(Row, col)) Then dict.Add arr(Row, col), col
 Continue2:
         Next
         Set outputDict(Title) = dict
@@ -482,24 +499,24 @@ Continue2:
     Set Array2DToDictByCol = outputDict
 End Function
 
-Public Function ArrayToDict(ByVal keys As Variant, ByVal ValArr As Variant, Optional SubFunc As String) As Object
+Public Function ArrayToDict(ByVal Keys As Variant, ByVal ValArr As Variant, Optional SubFunc As String) As Object
     Dim dict As Object
     Set dict = CreateObject("Scripting.Dictionary")
     Dim key As String
     Dim val As Variant
     Dim i As Long
-    If IsNumeric(keys) Then
+    If IsNumeric(Keys) Then
         For i = LBound(ValArr) To UBound(ValArr)
-            key = Trim(ValArr(i, keys))
+            key = Trim(ValArr(i, Keys))
             val = ArrayCutByIndex(ValArr, i)
             If Len(SubFunc) > 0 Then val = Application.Run(SubFunc, val)
             dict(key) = ArrayPush(dict(key), val)
         Next
-    ElseIf IsArray(keys) Then
-        If UBound(keys) - LBound(keys) <> UBound(ValArr) - LBound(ValArr) Then Err.Raise 13, Description:="ArrayToDict: keys length not equal to values lenght"
+    ElseIf IsArray(Keys) Then
+        If UBound(Keys) - LBound(Keys) <> UBound(ValArr) - LBound(ValArr) Then Err.Raise 13, Description:="ArrayToDict: keys length not equal to values lenght"
         
-        For i = LBound(keys) To UBound(keys)
-            key = Trim(keys(i))
+        For i = LBound(Keys) To UBound(Keys)
+            key = Trim(Keys(i))
             
             val = ArrayCutByIndex(ValArr, i)
             If Len(SubFunc) > 0 Then val = Application.Run(SubFunc, val)
@@ -530,12 +547,12 @@ Public Sub ModAddParam(ByRef dict As Dictionary, ByVal FnName As String, ByVal F
     Dim argslistDict As New Dictionary
     Dim argDict As Dictionary
     Dim argParams As Variant
-    Dim Curr As Variant
+    Dim curr As Variant
      
     If IsEmpty(FnArgs) Then GoTo BeforeExit
-    For Each Curr In FnArgs
+    For Each curr In FnArgs
         Set argDict = New Dictionary
-        argParams = Split(Curr, "=")
+        argParams = Split(curr, "=")
         argDict.Add "Optional", CBool(InStr(argParams(1), "Optional "))
         argDict.Add "Type", Replace(argParams(1), "Optional ", vbNullString)
         argslistDict.Add argParams(0), argDict
@@ -556,8 +573,8 @@ Public Function ModList() As Dictionary
     'например Array("Аргумент 1=String", "Аргумент 2=Optional Variant", "Аргумент 3=Optional Long")
     For Each Fn In Array( _
         Array("autoIncrement", "Номер по порядку", Array("Начальное значение=Optional Long")), _
-        Array("updateValue", "Фиксированное значение", Array("Номер Колонки=Long", "Значение=Variant", "Менять не пустые=Boolean")), _
-        Array("addPrefix", "Добавить префикс", Array("Номер Колонки=Long", "Префикс=String")), _
+        Array("updateValue", "Фиксированное значение", Array("Значение=Variant", "Менять не пустые=Boolean")), _
+        Array("addPrefix", "Добавить префикс", Array("Префикс=String")), _
         Array("checkCondition", "Если(Условие как в формуле, вместо ячейки значения target - ""AND(target > 1,target < 5)"")", Array("Номер Колонки=Long", "Условие=String", "Если ИСТИНА=FuncName", "Параметры=Variant")) _
         )
         ModAddParam ModList, Fn(0), Fn(1), Fn(2)
@@ -569,6 +586,7 @@ Public Sub FnUpdateAdd(ByRef dict As Dictionary, ByVal ColNum As Long, ByVal New
     Dim subDict As New Dictionary
     subDict.Add "Name", FnName
     subDict.Add "NewCol", NewCol
+    subDict.Add "ColNum", ColNum
     subDict.Add "Args", FnArgs
     dict.Add ColNum, subDict
 End Sub
@@ -581,6 +599,7 @@ End Sub
 ''
 'Note: Форма написания функции:
 'Public Function [Name](ByRef rowArr As Variant, Args As Variant) as [Type]
+' Dim ColNum As Long                            '0
 ' Dim [ArgName] as [ArgType]                    '[index]
 ' ArgName = Args(index)
 ' --- do something
@@ -588,23 +607,22 @@ End Sub
 ''
 
 'Инкрементирует автоматически(статическая функция запоминает значения внутри runtime)
-Static Function autoIncrement(ByRef rowArr As Variant, Args As Variant) As Long
+Static Function autoIncrement(ByRef rowArr As Variant, ColNum As Long, args As Variant) As Long
     Dim n As Long
     Dim start As Long                            '0
-    If Not IsEmpty(Args) Then start = Args(0)
+    If IsArray(args) Then start = args(0)
     If start > n Then n = start
     n = n + 1
     autoIncrement = n
 End Function
 
 'Назначаем значение по умолчанию если ячейка пуста
-Public Function updateValue(ByRef rowArr As Variant, Args As Variant) As Variant
-    Dim ColNum As Long                           '0
-    Dim Value As Variant                         '1
-    Dim NotEmptyUpdate As Boolean                '2
-    ColNum = Args(0)
-    Value = Args(1)
-    NotEmptyUpdate = Args(2)
+Public Function updateValue(ByRef rowArr As Variant, ColNum As Long, args As Variant) As Variant
+    Dim Value As Variant                         '0
+    Dim NotEmptyUpdate As Boolean                '1
+    ColNum = args(0)
+    Value = args(1)
+    NotEmptyUpdate = args(2)
     If NotEmptyUpdate = True Or Len(rowArr(ColNum)) = 0 Then
         updateValue = Value
     Else
@@ -613,39 +631,35 @@ Public Function updateValue(ByRef rowArr As Variant, Args As Variant) As Variant
 End Function
 
 'Добавляем префикс с возможным условием
-Public Function addPrefix(ByRef rowArr As Variant, Args As Variant) As String
-    Dim ColNum As Long                           '0
-    Dim Prefix As String                         '1
-    On Error GoTo Done
-    ColNum = Args(0)
-    Prefix = Args(1)
+Public Function addPrefix(ByRef rowArr As Variant, ColNum As Long, args As Variant) As String
+    Dim Prefix As String                         '0
+    On Error GoTo done
+    Prefix = args(0)
     If VarType(rowArr(ColNum)) <> vbString Then
         rowArr(ColNum) = CStr(rowArr(ColNum))
     End If
     addPrefix = Prefix & rowArr(ColNum)
-Done:
+done:
 End Function
 
 'Проверяем условие для значения и назначаем положительные и отрицательные значения
-Public Function checkCondition(ByRef rowArr As Variant, Args As Variant) As Variant
+Public Function checkCondition(ByRef rowArr As Variant, ColNum As Long, args As Variant) As Variant
     Const keyword As String = "target"
     Dim output As Variant
-    Dim ColNum As Long                           '0
-    Dim condition As String                      '1
-    Dim FnNameOnTrue As String                   '2
-    Dim FnArgs As Variant                        '3
-    ColNum = Args(0)
-    condition = Args(1)
-    If UBound(Args) > 1 Then
-        FnNameOnTrue = Args(2)
-        FnArgs = Args(3)
+    Dim condition As String                      '0
+    Dim FnNameOnTrue As String                   '1
+    Dim FnArgs As Variant                        '2
+    condition = args(0)
+    If UBound(args) > 1 Then
+        FnNameOnTrue = args(1)
+        FnArgs = args(2)
     End If
     
     condition = "=IF(" & condition & ", True, False)"
     condition = WorksheetFunction.Substitute(condition, keyword, rowArr(ColNum))
     output = Evaluate(condition)
     
-    If Len(FnNameOnTrue) > 0 And output = True Then checkCondition = Application.Run(FnNameOnTrue, rowArr, FnArgs)
+    If Len(FnNameOnTrue) > 0 And output = True Then checkCondition = Application.Run(FnNameOnTrue, rowArr, ColNum, FnArgs)
     If Len(FnNameOnTrue) = 0 Then checkCondition = output
 End Function
 
@@ -654,42 +668,7 @@ Function StringEscComma(ByVal str As String) As String
     StringEscComma = Replace(str, ",", Chr(130))
 End Function
 
-'*********************************************************** TEST ***********************************************************
-Sub TestModificators()
-    Dim dataRng As Range
-    Dim i As Long
-    Dim arr As Variant
-    Dim iterArr As Variant
-    Dim result As Variant
-    Dim FnDict As Dictionary
-    Set FnDict = ModList
-    Dim UpdateDict As New Dictionary
-    'Нужно учитывать, что если добавляем колонку, индекс последующих увеличивается
-    For Each iterArr In Array( _
-        Array(1, True, "autoIncrement", Empty), _
-        Array(2, False, "addPrefix", Array(2, "Pre_")), _
-        Array(4, True, "checkCondition", Array(4, "target = 1", "updateValue", Array(2, "Бюро", True))) _
-        )
-        FnUpdateAdd UpdateDict, iterArr(0), iterArr(1), iterArr(2), iterArr(3)
-    Next
-'    With ShtMainData.Cells(1).CurrentRegion
-'        arr = Array2DIterRows(.Cells.Value2, RangeGetMerged(.Cells).Rows.count, UpdateDict)
-'    End With
-    Set dataRng = RangeMainData
-    arr = Array2DIterRows(dataRng.Cells.Value2, , UpdateDict)
-    result = ArrayMergeTo2D(arr)
-End Sub
 
-Sub TestCutChunks()
-    Dim dataRng As Range
-    Dim chunks As Dictionary
-    Set dataRng = RangeMainData
-    
-    Set chunks = ChunksParse(dataRng, 1)
-    Stop
-End Sub
-
-'*********************************************************** TEST ***********************************************************
 
 
 

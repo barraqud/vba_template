@@ -7,10 +7,10 @@ Public Index As Long
 Public InitColumn As Long
 Public Func As String
 
-Private Args As Dictionary
+Private args As Dictionary
 Private Page As MSForms.Page
-Private TitleLabel As MSForms.label
-Private WithEvents InitData As MSForms.textBox
+Private TitleLabel As MSForms.Label
+Private WithEvents InitData As MSForms.TextBox
 Private WithEvents Modifier As MSForms.ComboBox
 Private modifiersList As Dictionary
 Private modArgs As Collection
@@ -19,7 +19,7 @@ Private Top As Long
 Private Const Width As Long = 60
 Private Const Height As Long = 20
 
-Public Sub init(CurrPage As MSForms.Page, ByVal RowTitle As String, ByVal RowParent As String, ByVal RowIndex As Long)
+Public Sub Init(CurrPage As MSForms.Page, ByVal RowTitle As String, ByVal RowParent As String, ByVal RowIndex As Long)
     Index = RowIndex
     Title = RowTitle
     Parent = RowParent
@@ -41,7 +41,7 @@ End Sub
 Private Sub AddModifier(Optional Left As Long = 150)
     With Page
         Set Modifier = .Controls.Add("Forms.ComboBox.1", "ComboBox_" & Parent)
-        Modifier.List = modifiersList.keys
+        Modifier.List = modifiersList.Keys
         CtrlDefaultParams Modifier, Width, Height, Index * 30 + 10, Left, , Index
         Modifier.TextAlign = fmTextAlignLeft
     End With
@@ -74,7 +74,7 @@ End Sub
 
 Private Sub CheckInitData()
     Dim Re As New clsRE
-    Re.init RePattern_rngstring, False, True
+    Re.Init RePattern_rngstring, False, True
     On Error GoTo BeforeExit
     Select Case True
     Case Re.TestString(InitData.Value)
@@ -115,12 +115,12 @@ Private Sub Modifier_Change()
     If Not modifiersList.Exists(Modifier.Value) Then Exit Sub
     Set FnData = modifiersList(Modifier.Value)
     Func = FnData("Name")
-    Set Args = FnData("Args")
+    Set args = FnData("Args")
     On Error GoTo BeforeNext
     'Argument title
-    For Each key In Args.keys
+    For Each key In args.Keys
         Set modArg = New clsModArg
-        modArg.Add Page, Func, key, Args(key)("Type"), Args(key)("Optional"), Index, ColIndex, modifiersList, Width, Height
+        modArg.Add Page, Func, key, args(key)("Type"), args(key)("Optional"), Index, ColIndex, modifiersList, Width, Height
         modArgs.Add modArg
 BeforeNext:
         ColIndex = ColIndex + 1

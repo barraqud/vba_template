@@ -47,7 +47,7 @@ Public Sub ValidationDependentUpdate(TargetRng As Range, OffsetFromParent As Lon
         If Not Grouped.Exists(key) Then GoTo Continue
         validationString = Join(Grouped(key), ",")
         
-        With elem.offset(ColumnOffset:=OffsetFromParent).Validation
+        With elem.offset(columnoffset:=OffsetFromParent).Validation
             .Delete
             .Add Type:=xlValidateList, _
                  AlertStyle:=xlValidAlertStop, _
@@ -70,7 +70,7 @@ Public Sub ValidationUpdate(Payload As String, columnNum As Long, Optional RowsC
         End With
     Else: validationString = Payload
     End If
-    With DataMainSheet.Columns(columnNum)
+    With ShtMainData.Columns(columnNum)
         If RowsCount = 0 Then RowsCount = .Rows.count
         With .Resize(RowsCount - 3).offset(3).Validation
             .Delete
@@ -86,13 +86,13 @@ Public Sub ValidationUpdate(Payload As String, columnNum As Long, Optional RowsC
 End Sub
 
 Public Sub ValidationClear(columnNum As Long)
-    With DataMainSheet.Columns(columnNum)
+    With ShtMainData.Columns(columnNum)
         .Resize(.Rows.count - 3).offset(3).Validation.Delete
     End With
 End Sub
 
 Public Function getLastRow(Optional withScroll As Boolean = True) As Range
-    With DataMainSheet.Cells(1, 1).CurrentRegion
+    With ShtMainData.Cells(1, 1).CurrentRegion
         Set getLastRow = .Rows(.Rows.count + 1)
         If withScroll Then Application.Goto getLastRow, False
     End With

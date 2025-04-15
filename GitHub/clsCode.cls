@@ -1,18 +1,18 @@
 '@Folder("GitHub")
 Option Explicit
 
-Public Components As Collection
+Private Const DirExclude = "Dev"
 
-Private Const DirExclude = "Dev;_key"
+Public Components As Dictionary
+'Только пути к старым файлам
+Public OldTree As Dictionary
 
 Private Self As vbide.VBProject
-Private Path As String
-Private Extension As String
 
 Private Function SetModuleDir(Line As String) As String
     Dim Match As String
     Dim Re As New clsRE
-    Re.init "\'\@Folder\(\""(.+)\""\)", False, True
+    Re.Init "\'\@Folder\(\""(.+)\""\)", False, True
     If Not Re.TestString(Line) Then Exit Function
     On Error GoTo BeforeExit
     Match = Re.ExecuteString(Line).Item(0).submatches.Item(0)
@@ -31,19 +31,19 @@ End Function
 
 Private Function GetModuleByName(moduleName As String) As vbide.CodeModule
     Dim project As vbide.VBProject
-    Dim Curr As Variant
+    Dim curr As Variant
     Set project = ActiveWorkbook.VBProject
-    For Each Curr In project.VBComponents
-        If Curr.Name = moduleName And ( _
-           Curr.Type = vbext_ct_ClassModule Or Curr.Type = vbext_ct_StdModule Or Curr.Type = vbext_ct_MSForm _
+    For Each curr In project.VBComponents
+        If curr.Name = moduleName And ( _
+           curr.Type = vbext_ct_ClassModule Or curr.Type = vbext_ct_StdModule Or curr.Type = vbext_ct_MSForm _
            ) Then
-            Set GetModuleByName = Curr.CodeModule
+            Set GetModuleByName = curr.CodeModule
             Exit For
         End If
     Next
 End Function
 
-Public Function Update(vbMod As vbide.CodeModule, searchStr As String, Optional replaceStr As String = vbNullString, Optional isGlobal As Boolean = False) As String
+Public Sub Update(vbMod As vbide.CodeModule, searchStr As String, Optional replaceStr As String = vbNullString, Optional isGlobal As Boolean = False)
     Dim lineNum As Long
     lineNum = Find(vbMod, searchStr)
     On Error Resume Next
@@ -52,13 +52,13 @@ Public Function Update(vbMod As vbide.CodeModule, searchStr As String, Optional 
             .ReplaceLine lineNum, replaceStr
         End If
     End With
-End Function
+End Sub
 
 Public Function Read(vbMod As vbide.CodeModule, Optional startPos As Long = 1, Optional endPos As Long = 0) As String
     If Err Then Exit Function
     With vbMod
         If Not endPos Then endPos = .CountOfLines
-        Debug.Print .Lines(startPos, endPos - startPos)
+        Read = .Lines(startPos, endPos - startPos)
     End With
 End Function
 
@@ -80,10 +80,38 @@ Public Function Find(vbMod As vbide.CodeModule, search As String, Optional start
     End With
 End Function
 
-Private Function DirPass(Dir As String) As Boolean
+Public Sub Compare(Optional Other As Dictionary, Optional isPushing As Boolean = True)
+    If isPushing Then
+        Set Components = DropOld(Other, Components)
+    Else
+'        Set Compare = DropOld(Components, Other)
+'        Set Components = Other
+    End If
+End Sub
+
+Private Function DropOld(oldDict As Dictionary, newDict As Dictionary) As Dictionary
+    Dim dict As Dictionary
+    Dim key As Variant
+    Set DropOld = New Dictionary
+    For Each key In oldDict
+        If newDict.Exists(key) Then
+            Set dict = newDict(key)
+            DropOld.Add key, dict
+        Else
+            Set dict = New Dictionary
+            dict.Add "path", key
+            dict.Add "content", Null
+            dict.Add "mode", "100644"
+            dict.Add "type", "blob"
+            DropOld.Add key, dict
+        End If
+    Next
+End Function
+
+Private Function DirPass(dir As String) As Boolean
     Dim pass As Variant
     For Each pass In Split(DirExclude, ";")
-        If Dir = pass & "/" Then
+        If dir = pass & "/" Then
             DirPass = True
             Exit Function
         End If
@@ -92,24 +120,27 @@ End Function
 
 Private Sub Class_Initialize()
     Dim dict As Dictionary
-    Dim Dir As String
+    Dim dir As String
+    Dim path As String
     Dim content As String
     Dim vMod As Variant
-    Set Components = New Collection
+    Set Components = New Dictionary
+    Components.CompareMode = TextCompare
     Set Self = ActiveWorkbook.VBProject
     For Each vMod In Self.VBComponents
         If vMod.Type = vbext_ct_ClassModule Or vMod.Type = vbext_ct_StdModule Or vMod.Type = vbext_ct_MSForm Then
             With vMod.CodeModule
                 content = .Lines(1, .CountOfLines)
             End With
-            Dir = SetModuleDir(content)
-            If DirPass(Dir) Then GoTo Continue
+            dir = SetModuleDir(content)
+            If DirPass(dir) Then GoTo Continue
             Set dict = New Dictionary
-            dict.Add "path", Dir & vMod.Name & SetModuleExt(vMod)
+            path = dir & vMod.Name & SetModuleExt(vMod)
+            dict.Add "path", path
             dict.Add "content", content
             dict.Add "mode", "100644"
             dict.Add "type", "blob"
-            Components.Add dict
+            Components.Add path, dict
         End If
 Continue:
     Next
