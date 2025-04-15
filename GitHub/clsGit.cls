@@ -203,9 +203,8 @@ Private Function CommitCreate(message As String, treeSHA As String, parentSHA As
     Payload.Add "tree", treeSHA
     Payload.Add "parents", parents
     Set response = fetchAuthorized(setURL("git", "commits"), MPOST, , Payload)
-    Debug.Assert response.Exists("sha")
+    If response.Exists("message") And Not response.Exists("sha") Then Err.Raise vbObjectError + 106, "ClsGit.CommitCreate", response("message")
     Head.SHA = response("sha")
-    '        If response.Exists("message") Then CommitCreate = response("message")
 End Function
 
 'Git submethods
@@ -214,14 +213,14 @@ Public Function BranchGetList() As Collection
     Set BranchGetList = fetchAuthorized(setURL("git", "refs", "heads"), method:=MGET)
 End Function
 
-Public Function BranchGet() As Dictionary
+Public Function BranchGet() As String
     Dim branch As Dictionary
     
     Set branch = fetchAuthorized(setURL("commits", LCase(Head.branch)), method:=MGET)
-    If branch.Exists("message") Then Exit Function
-    Set BranchGet = New Dictionary
-    BranchGet.Add "sha", branch("sha")
-    BranchGet.Add "tree", branch("commit")("tree")("sha")
+    If branch.Exists("message") And Not branch.Exists("commit") Then Err.Raise vbObjectError + 106, "ClsGit.BranchGet", branch("message")
+    Head.SHA = branch("sha")
+    Head.treeSHA = branch("commit")("tree")("sha")
+    Head.message = branch("commit")("message")
 End Function
 
 Private Function BranchCreate(Optional SHA = DefaultHeadSHA) As String
@@ -235,14 +234,14 @@ Private Function BranchCreate(Optional SHA = DefaultHeadSHA) As String
     BranchCreate = branch("object")("sha")
 End Function
 
-Private Function BranchSetRef(SHA As String) As String
+Private Sub BranchSetRef(SHA As String)
     Dim branch As Variant
     Dim Payload As New Dictionary
     Payload.Add "sha", SHA
     Set branch = fetchAuthorized(setURL("git", "refs", "heads", Head.branch), method:=MPATCH, Payload:=Payload)
-    If branch.Exists("message") And Not branch.Exists("object") Then BranchSetRef = branch("message")
+    If branch.Exists("message") And Not branch.Exists("object") Then Err.Raise vbObjectError + 106, "ClsGit.BranchSetRef", branch("message")
     If branch.Exists("object") Then Head.SHA = branch("object")("sha")
-End Function
+End Sub
 
 'BLOB
 Private Function BlobGet(ByVal url As String) As String
@@ -266,17 +265,6 @@ Private Function BlobCreate(ByVal content As String) As String
     BlobCreate = response("sha")
 End Function
 
-'CONTENT
-Private Function ContentPush(ByVal Comp As Dictionary) As String
-    Dim Payload As New Dictionary
-    Dim response As Object
-    Payload.Add "message", Head.message
-    Payload.Add "committer", Author
-    Payload.Add "content", Comp("content")
-    Set response = fetchAuthorized(setURL("contents", Comp("path")), MPOST, , Payload)
-    If response.Exists("sha") Then ContentPush = response("sha")
-End Function
-
 'TREE
 Private Function TreeGet(ByVal treeSHA As String) As Dictionary
     Set TreeGet = New Dictionary
@@ -285,17 +273,17 @@ Private Function TreeGet(ByVal treeSHA As String) As Dictionary
     Dim curr As Variant
     Dim response As Dictionary
     Set response = fetchAuthorized(setURL("git", "trees", treeSHA & "?recursive=true"), MGET)
-    If response.Exists("message") And Not response.Exists("tree") Then Exit Function
+    If response.Exists("message") And Not response.Exists("tree") Then Err.Raise vbObjectError + 106, "Git Pull/ClsGit.TreeGet", response("message")
     On Error GoTo BeforeExit
     For Each curr In response("tree")
-        If curr("mode") = "100644" And Not InStr(curr("path"), "README") Then
+        If curr("mode") = "100644" And Not InStr(1, curr("path"), "README", vbTextCompare) <> 0 Then
             TreeGet.Add curr("path"), BlobGet(curr("url"))
         End If
     Next
 BeforeExit:
 End Function
 
-Private Function TreeCreate() As String
+Private Sub TreeCreate()
     Dim response As Dictionary
     Dim Payload As New Dictionary
     Dim content As String, currSHA As String
@@ -304,14 +292,17 @@ Private Function TreeCreate() As String
     Dim comps As New Collection
     For Each Comp In CodeBase.Components.Items
         Set dict = New Dictionary
-        If VBA.VarType(Comp("content")) = vbNull Then
+        Select Case True
+        Case Not Comp.Exists("content")
+            dict.Add "sha", Head.treeSHA
+        Case VBA.VarType(Comp("content")) = vbNull
             dict.Add "sha", Null
-        Else
+        Case Else
             content = Comp("content")
             currSHA = BlobCreate(content)
             If Len(currSHA) = 0 Then GoTo Continue
             dict.Add "sha", currSHA
-        End If
+        End Select
         dict.Add "path", Comp("path")
         dict.Add "mode", Comp("mode")
         dict.Add "type", Comp("type")
@@ -322,8 +313,8 @@ Continue:
     Payload.Add "tree", comps
     Set response = fetchAuthorized(setURL("git", "trees"), MPOST, , Payload)
     Head.treeSHA = response("sha")
-    If response.Exists("message") And Not response.Exists("sha") Then TreeCreate = response("message")
-End Function
+    If response.Exists("message") And Not response.Exists("sha") Then Err.Raise vbObjectError + 106, "ClsGit.TreeCreate", response("message")
+End Sub
 
 'Git methods
 Public Function Push() As Boolean
@@ -332,25 +323,19 @@ Public Function Push() As Boolean
     Dim CurrHead As Dictionary
     Set CodeBase = New clsCode
     SettingsParse True
-    Set CurrHead = BranchGet
-    If Not CurrHead.Exists("tree") Then Err.Raise vbObjectError + 106, "Git Push/ClsGit.BranchGet", "Нет Tree SHA"
-    Head.SHA = CurrHead("sha")
-    Head.treeSHA = CurrHead("tree")
+    BranchGet
     CodeBase.Compare TreeGet(Head.treeSHA)
     'Получить ветку
-    state = TreeCreate
-    If Len(state) <> 0 Then Err.Raise vbObjectError + 106, "Git Push/ClsGit.TreeCreate", state
+    TreeCreate
     'Подготовить коммит
-    state = CommitCreate(Head.message, Head.treeSHA, Head.SHA)
-    If Len(state) <> 0 Then Err.Raise vbObjectError + 106, "Git Push/ClsGit.CommitCreate", state
+    CommitCreate Head.message, Head.treeSHA, Head.SHA
     'Обновить состояние к новому
-    state = BranchSetRef(Head.SHA)
-    If Len(state) <> 0 Then Err.Raise vbObjectError + 106, "Git Push/ClsGit.BranchSetRef", state
-    SettingsSave
+    BranchSetRef Head.SHA
+    SettingsSave Head.branch, Head.SHA, Head.message
     Push = True
 BeforeExit:
     If Err.Number <> 0 Then
-        MsgBox Err.Description, vbCritical, Err.Source
+        MsgBox "Push: " & Err.Description, vbCritical, Err.Source
         Err.Clear
     End If
     On Error GoTo 0
@@ -361,14 +346,20 @@ Public Function Pull(Optional path As String = vbNullString) As Boolean
     Dim headers As Variant
     Set CodeBase = New clsCode
     Dim CurrHead As Dictionary
-    Set CurrHead = BranchGet
-    If Not CurrHead.Exists("tree") Then Err.Raise vbObjectError + 106, "Git Pull/ClsGit.BranchGet", "Нет Tree SHA"
-    Head.treeSHA = CurrHead("tree")
+    BranchGet
     'Получить ветку
     Set response = TreeGet(Head.treeSHA)
-    If response.count = 0 Then Err.Raise vbObjectError + 106, "Git Pull/ClsGit.TreeGet", "Нет файлов"
-    CodeBase.Compare response
-    'Получить файлы
+    Debug.Print Join(response.Keys, vbNewLine)
+    'Обновить файлы
+    '    CodeBase.Compare response
+    
+    SettingsSave Head.branch, Head.SHA, Head.message
+BeforeExit:
+    If Err.Number <> 0 Then
+        MsgBox "Pull: " & Err.Description, vbCritical, Err.Source
+        Err.Clear
+    End If
+    On Error GoTo 0
 End Function
 
 Private Sub Class_Initialize()

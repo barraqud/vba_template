@@ -16,8 +16,16 @@ Private Function SetModuleDir(Line As String) As String
     If Not Re.TestString(Line) Then Exit Function
     On Error GoTo BeforeExit
     Match = Re.ExecuteString(Line).Item(0).submatches.Item(0)
+    If Not Components.Exists(Match) And Not DirPass(Match) Then
+        Dim dict As New Dictionary
+        dict.Add "path", Match
+        dict.Add "mode", "040000"
+        dict.Add "type", "tree"
+        Components.Add Match, dict
+    End If
     If Match <> "VBAProject" Then SetModuleDir = Match & "/"
 BeforeExit:
+
 End Function
 
 Private Function SetModuleExt(ByVal vbMod As VBComponent) As String
@@ -84,8 +92,8 @@ Public Sub Compare(Optional Other As Dictionary, Optional isPushing As Boolean =
     If isPushing Then
         Set Components = DropOld(Other, Components)
     Else
-'        Set Compare = DropOld(Components, Other)
-'        Set Components = Other
+        '        Set Compare = DropOld(Components, Other)
+        '        Set Components = Other
     End If
 End Sub
 
@@ -94,6 +102,7 @@ Private Function DropOld(oldDict As Dictionary, newDict As Dictionary) As Dictio
     Dim key As Variant
     Set DropOld = New Dictionary
     For Each key In oldDict
+        If InStr(key, "readme") Then GoTo Continue
         If newDict.Exists(key) Then
             Set dict = newDict(key)
             DropOld.Add key, dict
@@ -105,13 +114,14 @@ Private Function DropOld(oldDict As Dictionary, newDict As Dictionary) As Dictio
             dict.Add "type", "blob"
             DropOld.Add key, dict
         End If
+Continue:
     Next
 End Function
 
 Private Function DirPass(dir As String) As Boolean
     Dim pass As Variant
     For Each pass In Split(DirExclude, ";")
-        If dir = pass & "/" Then
+        If dir = pass & "/" Or dir = pass Then
             DirPass = True
             Exit Function
         End If
