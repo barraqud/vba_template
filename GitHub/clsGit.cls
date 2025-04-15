@@ -213,15 +213,16 @@ Public Function BranchGetList() As Collection
     Set BranchGetList = fetchAuthorized(setURL("git", "refs", "heads"), method:=MGET)
 End Function
 
-Public Function BranchGet() As String
+Public Sub BranchGet(Optional getMessage As Boolean = False)
     Dim branch As Dictionary
     
     Set branch = fetchAuthorized(setURL("commits", LCase(Head.branch)), method:=MGET)
     If branch.Exists("message") And Not branch.Exists("commit") Then Err.Raise vbObjectError + 106, "ClsGit.BranchGet", branch("message")
     Head.SHA = branch("sha")
     Head.treeSHA = branch("commit")("tree")("sha")
-    Head.message = branch("commit")("message")
-End Function
+    If getMessage Then Head.message = branch("commit")("message")
+    
+End Sub
 
 Private Function BranchCreate(Optional SHA = DefaultHeadSHA) As String
     Dim branch As Variant
@@ -276,7 +277,7 @@ Private Function TreeGet(ByVal treeSHA As String) As Dictionary
     If response.Exists("message") And Not response.Exists("tree") Then Err.Raise vbObjectError + 106, "Git Pull/ClsGit.TreeGet", response("message")
     On Error GoTo BeforeExit
     For Each curr In response("tree")
-        If curr("mode") = "100644" And Not InStr(1, curr("path"), "README", vbTextCompare) <> 0 Then
+        If Not InStr(1, curr("path"), "README", vbTextCompare) <> 0 And curr("mode") = "100644" Then
             TreeGet.Add curr("path"), BlobGet(curr("url"))
         End If
     Next
@@ -293,8 +294,8 @@ Private Sub TreeCreate()
     For Each Comp In CodeBase.Components.Items
         Set dict = New Dictionary
         Select Case True
-        Case Not Comp.Exists("content")
-            dict.Add "sha", Head.treeSHA
+'        Case Not Comp.Exists("content")
+'            GoTo NoContent
         Case VBA.VarType(Comp("content")) = vbNull
             dict.Add "sha", Null
         Case Else
@@ -303,12 +304,14 @@ Private Sub TreeCreate()
             If Len(currSHA) = 0 Then GoTo Continue
             dict.Add "sha", currSHA
         End Select
+NoContent:
         dict.Add "path", Comp("path")
         dict.Add "mode", Comp("mode")
         dict.Add "type", Comp("type")
         comps.Add dict
 Continue:
     Next
+    Stop
     Payload.Add "base_tree", Head.treeSHA
     Payload.Add "tree", comps
     Set response = fetchAuthorized(setURL("git", "trees"), MPOST, , Payload)
@@ -323,10 +326,13 @@ Public Function Push() As Boolean
     Dim CurrHead As Dictionary
     Set CodeBase = New clsCode
     SettingsParse True
-    BranchGet
+    BranchGet False
     CodeBase.Compare TreeGet(Head.treeSHA)
+    Debug.Print Join(CodeBase.Components.Keys, vbNewLine)
+    
     'Получить ветку
     TreeCreate
+
     'Подготовить коммит
     CommitCreate Head.message, Head.treeSHA, Head.SHA
     'Обновить состояние к новому

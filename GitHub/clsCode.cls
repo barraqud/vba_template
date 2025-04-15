@@ -16,16 +16,16 @@ Private Function SetModuleDir(Line As String) As String
     If Not Re.TestString(Line) Then Exit Function
     On Error GoTo BeforeExit
     Match = Re.ExecuteString(Line).Item(0).submatches.Item(0)
-    If Not Components.Exists(Match) And Not DirPass(Match) Then
-        Dim dict As New Dictionary
-        dict.Add "path", Match
-        dict.Add "mode", "040000"
-        dict.Add "type", "tree"
-        Components.Add Match, dict
-    End If
+'    If Not Components.Exists(Match) Then
+'        If DirPass(Match) Then GoTo BeforeExit
+'        Dim dict As New Dictionary
+'        dict.Add "path", Match
+'        dict.Add "mode", "040000"
+'        dict.Add "type", "tree"
+'        Components.Add Match, dict
+'    End If
     If Match <> "VBAProject" Then SetModuleDir = Match & "/"
 BeforeExit:
-
 End Function
 
 Private Function SetModuleExt(ByVal vbMod As VBComponent) As String
@@ -102,7 +102,7 @@ Private Function DropOld(oldDict As Dictionary, newDict As Dictionary) As Dictio
     Dim key As Variant
     Set DropOld = New Dictionary
     For Each key In oldDict
-        If InStr(key, "readme") Then GoTo Continue
+        If InStr(1, key, "README", vbTextCompare) Or Not InStr(1, key, "/", vbTextCompare) Then GoTo Continue
         If newDict.Exists(key) Then
             Set dict = newDict(key)
             DropOld.Add key, dict
@@ -115,6 +115,9 @@ Private Function DropOld(oldDict As Dictionary, newDict As Dictionary) As Dictio
             DropOld.Add key, dict
         End If
 Continue:
+    Next
+    For Each key In newDict
+        If Not DropOld.Exists(key) And Not InStr(1, key, "README", vbTextCompare) Then DropOld.Add key, newDict(key)
     Next
 End Function
 
