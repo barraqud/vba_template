@@ -21,8 +21,10 @@ Private Function Create(ByVal ModName As String, ByVal content As String) As VBI
     Set Create = vbComp.CodeModule
 End Function
 
-Public Sub Update(ByVal ModName As String, ByVal content As String, Optional clearContent As Boolean = True)
+Public Sub Update(ByVal ModPath As String, ByVal content As String, Optional clearContent As Boolean = True)
     Dim vbMod As VBIDE.CodeModule
+    Dim ModName As String
+    ModName = GetModuleName(ModPath)
     Set vbMod = GetModuleByName(ModName)
     If vbMod Is Nothing Then Set vbMod = Create(ModName, content)
     If Err.Number <> 0 Then Exit Sub
@@ -65,7 +67,7 @@ Public Sub Compare(Optional NewData As Dictionary, Optional isPushing As Boolean
         Set Components = DropOld(NewData, Components)
     Else
         UpdateAll NewData
-                Init
+        Init
     End If
 End Sub
 
@@ -81,7 +83,7 @@ Continue:
     For Each key In Components.Keys
         If ModData.Exists(key) Or CheckExclude(key) Then GoTo Continue2
         ModName = GetModuleName(key)
-        Set vbMod = GetModuleByName(ModName)
+        Set vbMod = GetModuleByName(ModName) '
         Self.VBComponents.Remove vbMod.Parent
 Continue2:
     Next
@@ -172,19 +174,19 @@ Private Function GetModuleType(ByVal ModName As String) As vbext_ComponentType
     End Select
 End Function
 
-Private Function GetModuleName(ByVal ModName As String) As String
+Public Function GetModuleName(ByVal ModName As String) As String
     Dim Match As String
     Dim RE As New clsRE
     RE.Init "([a-z0-9_-]+\/)?([a-z0-9_-]+)(\.(bas|cls|frm))", False, True
     GetModuleName = RE.ExecuteString(ModName).Item(0).submatches.Item(1)
 End Function
 
-Private Function GetModuleByName(moduleName As String) As VBIDE.CodeModule
+Public Function GetModuleByName(moduleName As String) As VBIDE.CodeModule
     Dim project As VBIDE.VBProject
     Dim curr As Variant
     Set project = ActiveWorkbook.VBProject
     For Each curr In project.VBComponents
-        If StrComp(curr.Name, moduleName, vbTextCompare) And ( _
+        If StrComp(curr.Name, moduleName, vbTextCompare) = 0 And ( _
            curr.Type = vbext_ct_ClassModule Or curr.Type = vbext_ct_StdModule Or curr.Type = vbext_ct_MSForm _
            ) Then
             Set GetModuleByName = curr.CodeModule

@@ -167,7 +167,27 @@ Public Function AddTextBox(Wrap As Variant, Name As String, Index As Long, Optio
     Set AddTextBox = Box
 End Function
 
-'=========================================================== BASE64 ===========================================================
+'=========================================================== ENCODE ===========================================================
+'String -> String encode
+Function ChangeTextCharset(ByVal txt$, ByVal DestCharset$, _
+                           Optional ByVal SourceCharset$) As String
+    ' функция перекодировки (смены кодировки) текстовоq строки
+    ' В качестве параметров функция получает текстовую строку txt$,
+    ' и название кодировки DestCharset$ (в которую будет переведён текст)
+    ' Функция возвращает текст в новой кодировке
+    On Error Resume Next: Err.Clear
+    With CreateObject("ADODB.Stream")
+        .Type = 2: .Mode = 3
+        If Len(SourceCharset$) Then .Charset = SourceCharset$    ' указываем исходную кодировку
+        .Open
+        .WriteText txt$
+        .Position = 0
+        .Charset = DestCharset$    ' назначаем новую кодировку
+        ChangeTextCharset = .ReadText
+        .Close
+    End With
+End Function
+
 'String -> BASE64
 Public Function EncodeBase64(ByVal text$)
     Dim b
@@ -259,7 +279,7 @@ End Function
 
 'Использовать аккуратно, предпочтительно в режиме разработчика
 Public Sub RangeJumpAndSelect(rng As Range)
-    Application.Goto rng.Cells(1, 1), Scroll:=True
+    Application.GoTo rng.Cells(1, 1), Scroll:=True
     rng.Select
 End Sub
 
