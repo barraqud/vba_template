@@ -199,6 +199,29 @@ Private Sub setInput()
     End With
 End Sub
 
+Sub pars()
+With LabelBlock
+    .Left = 4
+    .Top = 0
+    .Height = 12.6
+    .Width = 110
+    .TextAlign = fmTextAlignLeft
+    .BorderStyle = fmBorderStyleNone
+    .BackStyle = fmBackStyleTransparent
+    .ForeColor = FOREGRAY
+End With
+
+With Self
+    .Left = 0
+    .Top = 18
+    .Height = 20
+    .Width = 120
+    .TextAlign = fmTextAlignLeft
+    .BorderStyle = fmBorderStyleSingle
+    .BorderColor = FOREGRAY
+End With
+End Sub
+
 Public Sub CreateInput(ByVal Caption As String, ByVal Place As String, _
                        Width As Long, Height As Long, Optional IdxVert As Long = 0, Optional IdxHoriz As Long = 0, _
                        Optional TopOffset As Long = 0, Optional LeftOffset As Long = 0)

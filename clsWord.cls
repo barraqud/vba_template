@@ -27,7 +27,7 @@ Private Sub Class_Terminate()
     Set App = Nothing
 End Sub
 
-Public Sub Generate(rng As Range, Filename As String)
+Public Sub Generate(rng As Range, filename As String)
     
     On Error GoTo BeforeExit
     With App
@@ -40,7 +40,7 @@ Public Sub Generate(rng As Range, Filename As String)
         LinkedToExcel:=False, _
         WordFormatting:=False, _
         RTF:=False
-            .SaveAs "D:\WORK\VBA\Макет\" & Filename & ".docx"
+            .SaveAs "D:\WORK\VBA\Макет\" & filename & ".docx"
             .Close
         End With
         .Visible = True
@@ -50,12 +50,12 @@ BeforeExit:
     App.DisplayAlerts = -1
 End Sub
 
-Public Function Read(Filename As String) As Document
+Public Function Read(filename As String) As Document
         On Error GoTo BeforeExit
     With App
         .Visible = True
         .DisplayAlerts = 0
-        Set Read = .Documents.Open(Filename)
+        Set Read = .Documents.Open(filename)
     End With
 BeforeExit:
     App.DisplayAlerts = -1

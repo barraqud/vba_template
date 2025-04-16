@@ -4,6 +4,7 @@ Option Explicit
 Public Const BACKGRAY As Long = &HE0E0E0
 Public Const FOREPURPLE As Long = &H8000000D
 Public Const FOREGRAY As Long = &H80000006
+Public Const FOREBLUE As Long = &H80000002
 Public Const DEV_PASSWORD As String = "qwerty"
 
 Public Const RePattern_prefix = "ШАБЛОН_(.+)\.docx?$"
@@ -264,7 +265,7 @@ End Sub
 
 '=========================================================== FILE ===========================================================
 'Если AskUser=True то спрашивает где сохранить файл(при отмене укажет путь в текущую папку)
-Public Function FileNameCreate(Optional ByVal Filename As String, Optional AskUser As Boolean = False, Optional Title As String = "Выберите путь для сохранения") As String
+Public Function FileNameCreate(Optional ByVal filename As String, Optional AskUser As Boolean = False, Optional Title As String = "Выберите путь для сохранения") As String
     Dim dir As FileDialog
     Dim sItem As String
     If AskUser = True Then
@@ -272,7 +273,7 @@ Public Function FileNameCreate(Optional ByVal Filename As String, Optional AskUs
         With dir
             .Title = Title
             .AllowMultiSelect = False
-            .InitialFileName = FilePathCurrent(Filename)
+            .InitialFileName = FilePathCurrent(filename)
             If .Show <> -1 Then GoTo NoPath
             FileNameCreate = .SelectedItems(1)
 
@@ -281,13 +282,13 @@ Public Function FileNameCreate(Optional ByVal Filename As String, Optional AskUs
     End If
 NoPath:
     Set dir = Nothing
-    FileNameCreate = FilePathCurrent(Filename)
+    FileNameCreate = FilePathCurrent(filename)
 End Function
 
-Public Function FilePathCurrent(Optional Filename As String) As String
+Public Function FilePathCurrent(Optional filename As String) As String
     Dim path As String
     path = ThisWorkbook.path
-    If Len(Filename) > 0 Then path = path & "\" & Filename
+    If Len(filename) > 0 Then path = path & "\" & filename
     FilePathCurrent = Application.Clean(path)
 End Function
 

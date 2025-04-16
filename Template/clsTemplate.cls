@@ -78,30 +78,14 @@ BeforeExit:
     SwitchAutomation True
 End Sub
 
-Public Function ParseSaved(Optional ByVal TemplateName As String, Optional ByVal HeaderRows As Long = 1) As Dictionary
-    Dim dict As New Dictionary
-    Dim dataRng As Range
-    Dim currTitle As String
-    Dim curr As Range
-    Dim i As Long
-    Dim lastRow As Long
-'    If Len(TemplateName) = 0 Then Debug.Print ""
-    Set dataRng = RangeExclude(ShtOptionsMainData.Cells(1).CurrentRegion, cutRow:=1)
-    With dataRng.Columns(1).SpecialCells(xlCellTypeConstants, 7)
-    
-        For i = 1 To .Areas.count
-            If i < .Areas.count Then
-                lastRow = .Areas(i + 1).Row - 1
-            Else
-                lastRow = dataRng.Rows.count + HeaderRows
-            End If
-            currTitle = .Areas(i).Cells(1).Value
-            Set curr = .Areas(i).Resize(lastRow - .Areas(i).Row + 1, dataRng.Columns.count - 1).offset(columnoffset:=1)
-            dict.Add currTitle, OptionsCreate(curr.Value2)
-        Next
-    End With
-    Stop
-    Set ParseSaved = dict
+Public Function ParseSaved() As Dictionary
+Dim Chunks As New clsChunks
+Dim rng As Range
+With ShtOptionsMainData.Cells(1).CurrentRegion
+    Set rng = RangeExclude(.Cells, .Rows(1))
+End With
+Chunks.Init 1, , rng
+Set ParseSaved = Chunks.Chunks
 End Function
 
 Public Sub Fill()
@@ -121,21 +105,25 @@ Private Sub SetFile(Optional filepath As String)
     End If
 End Sub
 
-Private Function OptionsCreate(OptsArr As Variant) As Dictionary
-Dim dict As New Dictionary
-Dim args(1 To 5) As Variant
-Dim i As Long
-Dim j As Long
-For i = 1 To UBound(OptsArr)
-    dict.Add "VarName", OptsArr(i, 1)
-    dict.Add "InitData", OptsArr(i, 2)
-    dict.Add "Grouping", OptsArr(i, 3)
-    dict.Add "AutoValue", OptsArr(i, 4)
-    dict.Add "Modificator", OptsArr(i, 5)
-    For j = 6 To UBound(OptsArr, 2)
-        
+Private Function OptionsCreate(OptsArr As Variant) As Collection
+    Set OptionsCreate = New Collection
+    Dim dict As Dictionary
+    Dim args(1 To 5) As Variant
+    Dim i As Long
+    Dim j As Long
+    For i = 1 To UBound(OptsArr)
+        Set dict = New Dictionary
+        dict.Add "VarName", OptsArr(i, 1)
+        dict.Add "InitData", OptsArr(i, 2)
+        dict.Add "Grouping", OptsArr(i, 3)
+        dict.Add "AutoValue", OptsArr(i, 4)
+        dict.Add "Modificator", OptsArr(i, 5)
+        For j = 6 To UBound(OptsArr, 2)
+            args(j - 5) = OptsArr(i, j)
+        Next
+        dict.Add "Args", args
+        OptionsCreate.Add dict
     Next
-Next
 End Function
 
 Private Sub Class_Initialize()

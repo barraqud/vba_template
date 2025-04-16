@@ -73,11 +73,11 @@ Private Sub clearModArgs()
 End Sub
 
 Private Sub CheckInitData()
-    Dim Re As New clsRE
-    Re.Init RePattern_rngstring, False, True
+    Dim RE As New clsRE
+    RE.Init RePattern_rngstring, False, True
     On Error GoTo BeforeExit
     Select Case True
-    Case Re.TestString(InitData.Value)
+    Case RE.TestString(InitData.Value)
         InitColumn = Range(InitData.Value).Column
     Case InitData.Value = vbNullString: Exit Sub
     Case Else

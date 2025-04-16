@@ -15,18 +15,20 @@ Private Sub Class_Initialize()
     Set p_range = RangeExclude(headerRng.CurrentRegion, headerRng)
 End Sub
 
-Sub Init(ColNum As Long, Optional ColSize As Long)
+Sub Init(ColNum As Long, Optional ColSize As Long, Optional rng As Range)
     Dim FilterRng As Range
     Dim ChunkRng As Range
     Dim lastRow As Long, i As Long
-
+    
+    If Not IsMissing(rng) Then Set p_range = rng
+    
     With p_range
         lastRow = .Rows.count + .Row - 1
         'note: counts rm columns from 1
         Set FilterRng = .Columns(ColNum)
         If ColSize > 1 Then Set FilterRng = FilterRng.Resize(ColumnSize:=ColSize)
         With FilterRng.SpecialCells(xlCellTypeConstants, 7)
-
+            
             For i = .Areas.count To 1 Step -1
                 Set ChunkRng = .Areas(i).Resize(lastRow - .Areas(i).Row + 1, p_range.Columns.count)
                 Call Add(ChunkRng)
@@ -40,8 +42,10 @@ End Sub
 Private Sub Add(ChunkRng As Range)
     Dim ChunkNew As New clsChunk
     ChunkNew.ID = ChunkRng.Cells(1).Value2
+    Set ChunkRng = RangeExclude(ChunkRng, ChunkRng.Columns(1))
+    Debug.Print ChunkRng.Address
     If Chunks.Exists(ChunkNew.ID) Then GoTo MergeChunks
-    ChunkNew.Range = ChunkRng
+    Set ChunkNew.Range = ChunkRng
     ChunkNew.Value = ChunkRng.Value2
     'If Not ChunkNew Is Nothing Then
     Chunks.Add ChunkNew.ID, ChunkNew

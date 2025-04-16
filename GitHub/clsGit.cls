@@ -124,13 +124,13 @@ End Function
 
 'Commit and Committer
 Private Sub SettingsSave(Optional branch As String = vbNullString, Optional oldSHA As String = vbNullString, Optional message As String = vbNullString, Optional Name As String = vbNullString, Optional email As String = vbNullString)
-    Dim Re As New clsRE
+    Dim RE As New clsRE
     On Error GoTo BeforeExit
     With ShtOptionsProject.Range(BranchNameCell)
         If Len(branch & message & oldSHA) <> 0 Then
-            Re.Init "^[A-Z0-9\_]+$", True, True
+            RE.Init "^[A-Z0-9\_]+$", True, True
             'todo: запретить master
-            If Not Re.TestString(branch) Then Err.Raise vbObjectError + 101, "Настройка Проект.Git/ClsGit.SettingsSave", "Ветка должна быть в одно слово," & vbNewLine & "англ буквами, цифрами или ""_"""
+            If Not RE.TestString(branch) Then Err.Raise vbObjectError + 101, "Настройка Проект.Git/ClsGit.SettingsSave", "Ветка должна быть в одно слово," & vbNewLine & "англ буквами, цифрами или ""_"""
             If Len(oldSHA) = 0 Then Err.Raise vbObjectError + 102, "Настройка Проект.Git/ClsGit.SettingsSave", "ID пусто"
             If Len(message) = 0 Then Err.Raise vbObjectError + 103, "Настройка Проект.Git/ClsGit.SettingsSave", "Сообщение пусто"
             .Cells(1, 3).Value2 = branch
@@ -143,9 +143,9 @@ Private Sub SettingsSave(Optional branch As String = vbNullString, Optional oldS
             End With
         End If
         If Len(Name & email) <> 0 Then
-            Re.Init RePattern_email, False, True
+            RE.Init RePattern_email, False, True
             If Len(Name) = 0 Then Err.Raise vbObjectError + 104, "Настройка Проект.Git/ClsGit.SettingsSave", "Имя пусто"
-            If Not Re.TestString(email) Then Err.Raise vbObjectError + 105, "Настройка Проект.Git/ClsGit.SettingsSave", "Почта неверна"
+            If Not RE.TestString(email) Then Err.Raise vbObjectError + 105, "Настройка Проект.Git/ClsGit.SettingsSave", "Почта неверна"
             .Cells(4, 3).Value2 = Name
             .Cells(5, 3).Value2 = email
             With committer
@@ -164,13 +164,13 @@ End Sub
 
 Private Sub SettingsParse(Optional NeedMessage As Boolean = False)
     Dim values As Variant
-    Dim Re As New clsRE
+    Dim RE As New clsRE
     On Error GoTo BeforeExit
     values = Array2DSlice(ShtOptionsProject.Range(BranchNameCell).Value2, ECol, 3)
     
-    Re.Init "^[A-Z0-9\_]+$", True, True
+    RE.Init "^[A-Z0-9\_]+$", True, True
     'todo: запретить master
-    If Not Re.TestString(values(1)) Then Err.Raise vbObjectError + 101, "Настройка Проект.Git/ClsGit.SettingsParse", "Ветка должна быть в одно слово," & vbNewLine & "англ буквами, цифрами или ""_"""
+    If Not RE.TestString(values(1)) Then Err.Raise vbObjectError + 101, "Настройка Проект.Git/ClsGit.SettingsParse", "Ветка должна быть в одно слово," & vbNewLine & "англ буквами, цифрами или ""_"""
     If Len(values(2)) = 0 Then Err.Raise vbObjectError + 102, "Настройка Проект.Git/ClsGit.SettingsParse", "ID пусто"
     If Len(values(3)) = 0 And NeedMessage Then Err.Raise vbObjectError + 103, "Настройка Проект.Git/ClsGit.SettingsParse", "Сообщение пусто"
     With Head
@@ -178,9 +178,9 @@ Private Sub SettingsParse(Optional NeedMessage As Boolean = False)
         .SHA = values(2)
         .message = values(3)
     End With
-    Re.Init RePattern_email, False, True
+    RE.Init RePattern_email, False, True
     If Len(values(4)) = 0 Then Err.Raise vbObjectError + 104, "Настройка Проект.Git/ClsGit.SettingsSave", "Имя пусто"
-    If Not Re.TestString(values(5)) Then Err.Raise vbObjectError + 105, "Настройка Проект.Git/ClsGit.SettingsSave", "Почта неверна"
+    If Not RE.TestString(values(5)) Then Err.Raise vbObjectError + 105, "Настройка Проект.Git/ClsGit.SettingsSave", "Почта неверна"
     With committer
         .Name = values(4)
         .email = values(5)
@@ -270,7 +270,7 @@ End Function
 Private Function TreeGet(ByVal treeSHA As String) As Dictionary
     Set TreeGet = New Dictionary
     Dim dir As String
-    Dim path As String
+    Dim content As String
     Dim curr As Variant
     Dim response As Dictionary
     Set response = fetchAuthorized(setURL("git", "trees", treeSHA & "?recursive=true"), MGET)
@@ -278,7 +278,8 @@ Private Function TreeGet(ByVal treeSHA As String) As Dictionary
     On Error GoTo BeforeExit
     For Each curr In response("tree")
         If Not InStr(1, curr("path"), "README", vbTextCompare) <> 0 And curr("mode") = "100644" Then
-            TreeGet.Add curr("path"), BlobGet(curr("url"))
+            content = BlobGet(curr("url"))
+            TreeGet.Add curr("path"), content
         End If
     Next
 BeforeExit:
@@ -293,25 +294,20 @@ Private Sub TreeCreate()
     Dim comps As New Collection
     For Each Comp In CodeBase.Components.Items
         Set dict = New Dictionary
-        Select Case True
-'        Case Not Comp.Exists("content")
-'            GoTo NoContent
-        Case VBA.VarType(Comp("content")) = vbNull
+        If VBA.VarType(Comp("content")) = vbNull Then
             dict.Add "sha", Null
-        Case Else
+        Else
             content = Comp("content")
             currSHA = BlobCreate(content)
             If Len(currSHA) = 0 Then GoTo Continue
             dict.Add "sha", currSHA
-        End Select
-NoContent:
+        End If
         dict.Add "path", Comp("path")
         dict.Add "mode", Comp("mode")
         dict.Add "type", Comp("type")
         comps.Add dict
 Continue:
     Next
-    Stop
     Payload.Add "base_tree", Head.treeSHA
     Payload.Add "tree", comps
     Set response = fetchAuthorized(setURL("git", "trees"), MPOST, , Payload)
@@ -328,8 +324,6 @@ Public Function Push() As Boolean
     SettingsParse True
     BranchGet False
     CodeBase.Compare TreeGet(Head.treeSHA)
-    Debug.Print Join(CodeBase.Components.Keys, vbNewLine)
-    
     'Получить ветку
     TreeCreate
 
@@ -355,11 +349,10 @@ Public Function Pull(Optional path As String = vbNullString) As Boolean
     BranchGet
     'Получить ветку
     Set response = TreeGet(Head.treeSHA)
-    Debug.Print Join(response.Keys, vbNewLine)
     'Обновить файлы
-    '    CodeBase.Compare response
-    
+    CodeBase.Compare response, False
     SettingsSave Head.branch, Head.SHA, Head.message
+    Pull = True
 BeforeExit:
     If Err.Number <> 0 Then
         MsgBox "Pull: " & Err.Description, vbCritical, Err.Source

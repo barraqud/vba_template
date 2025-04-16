@@ -4,7 +4,7 @@ Private WithEvents PagesList As MSForms.MultiPage
 Private WithEvents successBtn As MSForms.CommandButton
 Private TemplateTitle As String
 Private elements() As Variant
-Private Filename As String
+Private filename As String
 
 Private Sub successBtn_Click()
     Dim ctrl As clsUfTemplRow

@@ -55,7 +55,6 @@ Private Sub UserForm_Initialize()
         With .MultiPages
             'Стартовая страница
             .Value = NumPage.pMain
-
         End With
         
     End With
@@ -98,7 +97,9 @@ End Sub
 
 'MAINPAGE
 Private Sub MainTemplatesList()
+Dim Saved As Dictionary
     Dim templ As New clsTemplate
+    Set Saved = templ.ParseSaved
 End Sub
 
 Private Sub Button_TemplateAdd_Click()
@@ -107,7 +108,7 @@ End Sub
 
 'PROJECT
 Public Sub ProjectInit(Optional ByVal ProjectName As String)
-
+    
 End Sub
 
 'SETTINGS
@@ -124,14 +125,14 @@ Private Sub SettingsDetails()
 End Sub
 
 Private Sub Button_Dev_Pull_Click()
-    Dim Re As New clsRE
+    Dim RE As New clsRE
     Dim Git As New clsGit
     Dim Name As String
     Dim email As String
     Dim password As String
-    Re.Init RePattern_email, False, True
+    RE.Init RePattern_email, False, True
     With Me
-        If isControlEmpty(.TextBox_DevName) Or isControlEmpty(.TextBox_DevPassword) Or .TextBox_DevPassword.Value <> DEV_PASSWORD Or isControlEmpty(.TextBox_DevEmail) Or Not Re.TestString(.TextBox_DevEmail.Value) Then GoTo BeforeExit
+        If isControlEmpty(.TextBox_DevName) Or isControlEmpty(.TextBox_DevPassword) Or .TextBox_DevPassword.Value <> DEV_PASSWORD Or isControlEmpty(.TextBox_DevEmail) Or Not RE.TestString(.TextBox_DevEmail.Value) Then GoTo BeforeExit
         Name = .TextBox_DevName.Value
         email = .TextBox_DevEmail.Value
         password = .TextBox_DevPassword.Value
@@ -151,7 +152,15 @@ Private Sub TextBox_Git_Access_Change()
         .Controls(Prefix_Git & "SHA").Locked = False
         .Controls(Prefix_Git & "AuthorName").Locked = False
         .Controls(Prefix_Git & "AuthorEmail").Locked = False
+        With TextBox_Git_Access
+        .Locked = True
+        .SpecialEffect = fmSpecialEffectFlat
+        .BorderStyle = fmBorderStyleSingle
+        .BorderColor = vbGreen
+        .ForeColor = FOREGRAY
+        End With
     End With
+    Status = "Git открыт"
 End Sub
 
 'SUBFUNCS
