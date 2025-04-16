@@ -72,6 +72,7 @@ End Sub
 Private Sub UpdateAll(ByVal ModData As Dictionary)
     Dim key As Variant
     Dim ModName As String
+    Dim vbMod As VBIDE.CodeModule
     For Each key In ModData.Keys
         If CheckExclude(key) Then GoTo Continue
         Update key, ModData(key)
@@ -80,7 +81,8 @@ Continue:
     For Each key In Components.Keys
         If ModData.Exists(key) Or CheckExclude(key) Then GoTo Continue2
         ModName = GetModuleName(key)
-        Self.VBComponents.Remove ModName
+        Set vbMod = GetModuleByName(ModName)
+        Self.VBComponents.Remove vbMod.Parent
 Continue2:
     Next
 End Sub
@@ -182,7 +184,7 @@ Private Function GetModuleByName(moduleName As String) As VBIDE.CodeModule
     Dim curr As Variant
     Set project = ActiveWorkbook.VBProject
     For Each curr In project.VBComponents
-        If curr.Name = moduleName And ( _
+        If StrComp(curr.Name, moduleName, vbTextCompare) And ( _
            curr.Type = vbext_ct_ClassModule Or curr.Type = vbext_ct_StdModule Or curr.Type = vbext_ct_MSForm _
            ) Then
             Set GetModuleByName = curr.CodeModule

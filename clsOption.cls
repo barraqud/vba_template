@@ -108,17 +108,7 @@ End Sub
 
 'PROJECT
 Public Sub ProjectInit(Optional ByVal ProjectName As String)
-    'askjdlkjfdkl;asjdhklfjhjdlskhgflkjfdshgkljafshgkjahfklgjhdfkjghkjfdhgkljad
-    'askjdlkjfdkl;asjdhklfjhjdlskhgflkjfdshgkljafshgkjahfklgjhdfkjghkjfdhgkljad
-    'askjdlkjfdkl;asjdhklfjhjdlskhgflkjfdshgkljafshgkjahfklgjhdfkjghkjfdhgkljad
-    'askjdlkjfdkl;asjdhklfjhjdlskhgflkjfdshgkljafshgkjahfklgjhdfkjghkjfdhgkljad
-    'askjdlkjfdkl;asjdhklfjhjdlskhgflkjfdshgkljafshgkjahfklgjhdfkjghkjfdhgkljad
-    'askjdlkjfdkl;asjdhklfjhjdlskhgflkjfdshgkljafshgkjahfklgjhdfkjghkjfdhgkljad
-    'askjdlkjfdkl;asjdhklfjhjdlskhgflkjfdshgkljafshgkjahfklgjhdfkjghkjfdhgkljad
-    'askjdlkjfdkl;asjdhklfjhjdlskhgflkjfdshgkljafshgkjahfklgjhdfkjghkjfdhgkljad
-    'askjdlkjfdkl;asjdhklfjhjdlskhgflkjfdshgkljafshgkjahfklgjhdfkjghkjfdhgkljad
-    'askjdlkjfdkl;asjdhklfjhjdlskhgflkjfdshgkljafshgkjahfklgjhdfkjghkjfdhgkljad
-    'askjdlkjfdkl;asjdhklfjhjdlskhgflkjfdshgkljafshgkjahfklgjhdfkjghkjfdhgkljad
+    
 End Sub
 
 'SETTINGS
