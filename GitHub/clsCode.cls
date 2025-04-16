@@ -42,6 +42,49 @@ Public Function Read(ByVal ModName As String, Optional startPos As Long = 1, Opt
     End With
 End Function
 
+Public Function Find(vbMod As VBIDE.CodeModule, search As String, Optional startPos As Long = 1) As Long
+    Dim s As String
+    Dim i As Long
+    Dim RE As New RegExp
+    RE.Pattern = search
+    RE.Global = True
+    RE.IgnoreCase = False
+    
+    With vbMod
+        For i = startPos To .CountOfLines
+            If RE.Test(.Lines(i, 1)) Then
+                Find = i
+                Exit For
+            End If
+        Next
+    End With
+End Function
+
+Public Sub Compare(Optional NewData As Dictionary, Optional isPushing As Boolean = True)
+    If isPushing Then
+        Set Components = DropOld(NewData, Components)
+    Else
+        UpdateAll NewData
+                Init
+    End If
+End Sub
+
+Private Sub UpdateAll(ByVal ModData As Dictionary)
+    Dim key As Variant
+    Dim ModName As String
+    For Each key In ModData.Keys
+        If CheckExclude(key) Then GoTo Continue
+        Update key, ModData(key)
+Continue:
+    Next
+    For Each key In Components.Keys
+        If ModData.Exists(key) Or CheckExclude(key) Then GoTo Continue2
+        ModName = GetModuleName(key)
+        Self.VBComponents.Remove ModName
+Continue2:
+    Next
+End Sub
+
 Private Sub Init()
     Dim dict As Dictionary
     Dim dir As String
@@ -68,7 +111,6 @@ Private Sub Init()
         End If
 Continue:
     Next
-    Debug.Print Join(Components.Keys, vbNewLine)
 End Sub
 
 Private Function CheckExclude(ByVal ModName As String) As Boolean
@@ -78,22 +120,21 @@ Private Function CheckExclude(ByVal ModName As String) As Boolean
     Dim curr As Variant
     Dim ExcludeList As Variant
     RE.Init "(([a-z0-9_-]+)\/)?([a-z0-9_-]+)(\.(bas|cls|frm))", False, True
+    On Error GoTo BeforeExit
     With RE.ExecuteString(ModName).Item(0).submatches
         dir = .Item(1)
         filename = .Item(2)
     End With
     For Each curr In Split(DirExclude, ";")
-        If InStr(1, dir, curr, vbTextCompare) Then
-            CheckExclude = True
-            Exit Function
-        End If
+        If InStr(1, dir, curr, vbTextCompare) Then GoTo BeforeExit
     Next
     For Each curr In Split(FileExclude, ";")
-        If InStr(1, filename, curr, vbTextCompare) Then
-            CheckExclude = True
-            Exit Function
-        End If
+        If InStr(1, filename, curr, vbTextCompare) Then GoTo BeforeExit
     Next
+    Exit Function
+BeforeExit:
+    CheckExclude = True
+    Exit Function
 End Function
 
 Private Function SetModuleDir(Line As String) As String
@@ -150,49 +191,6 @@ Private Function GetModuleByName(moduleName As String) As VBIDE.CodeModule
     Next
 End Function
 
-Public Function Find(vbMod As VBIDE.CodeModule, search As String, Optional startPos As Long = 1) As Long
-    Dim s As String
-    Dim i As Long
-    Dim RE As New RegExp
-    RE.Pattern = search
-    RE.Global = True
-    RE.IgnoreCase = False
-    
-    With vbMod
-        For i = startPos To .CountOfLines
-            If RE.Test(.Lines(i, 1)) Then
-                Find = i
-                Exit For
-            End If
-        Next
-    End With
-End Function
-
-Public Sub Compare(Optional NewData As Dictionary, Optional isPushing As Boolean = True)
-    If isPushing Then
-        Set Components = DropOld(NewData, Components)
-    Else
-        UpdateAll NewData
-        Init
-    End If
-End Sub
-
-Public Sub UpdateAll(ByVal ModData As Dictionary)
-    Dim key As Variant
-    Dim ModName As String
-    For Each key In ModData.Keys
-        If CheckExclude(key) Then GoTo Continue
-        Update key, ModData(key)
-Continue:
-    Next
-    For Each key In Components.Keys
-        If ModData.Exists(key) Or CheckExclude(key) Then GoTo Continue2
-        ModName = GetModuleName(key)
-        Self.VBComponents.Remove ModName
-Continue2:
-Next
-End Sub
-
 Private Function DropOld(oldDict As Dictionary, newDict As Dictionary) As Dictionary
     Dim dict As Dictionary
     Dim key As Variant
@@ -218,6 +216,6 @@ Continue:
 End Function
 
 Private Sub Class_Initialize()
-Init
+    Init
 End Sub
 

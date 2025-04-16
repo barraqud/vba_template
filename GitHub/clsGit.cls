@@ -316,12 +316,13 @@ Continue:
 End Sub
 
 'Git methods
-Public Function Push() As Boolean
+Public Function Push(Optional message As String) As Boolean
     On Error GoTo BeforeExit
     Dim state As String
     Dim CurrHead As Dictionary
     Set CodeBase = New clsCode
     SettingsParse True
+    If Len(message) <> 0 Then Head.message = message
     BranchGet False
     CodeBase.Compare TreeGet(Head.treeSHA)
     'Получить ветку

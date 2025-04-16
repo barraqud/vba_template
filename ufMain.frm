@@ -97,7 +97,7 @@ End Sub
 
 'MAINPAGE
 Private Sub MainTemplatesList()
-Dim Saved As Dictionary
+    Dim Saved As Dictionary
     Dim templ As New clsTemplate
     Set Saved = templ.ParseSaved
 End Sub
@@ -124,23 +124,25 @@ Private Sub SettingsDetails()
     End With
 End Sub
 
-Private Sub Button_Dev_Pull_Click()
-    Dim RE As New clsRE
+Private Sub Button_Git_Push_Click()
     Dim Git As New clsGit
-    Dim Name As String
-    Dim email As String
-    Dim password As String
-    RE.Init RePattern_email, False, True
-    With Me
-        If isControlEmpty(.TextBox_DevName) Or isControlEmpty(.TextBox_DevPassword) Or .TextBox_DevPassword.Value <> DEV_PASSWORD Or isControlEmpty(.TextBox_DevEmail) Or Not RE.TestString(.TextBox_DevEmail.Value) Then GoTo BeforeExit
-        Name = .TextBox_DevName.Value
-        email = .TextBox_DevEmail.Value
-        password = .TextBox_DevPassword.Value
+    With Me.MultiPages.Pages(NumPage.pSettings).Controls(Prefix_Git & "Message")
+        If Len(.Value) <> 0 Then
+            Git.Push .Value
+        Else
+            MsgBox "Нужно указать описание", vbOKOnly, "Описание закрепления"
+        End If
     End With
-    'Git pull
     Exit Sub
 BeforeExit:
     MsgBox "Данные введены неверно!", vbOKOnly, "Имя, email и пароль"
+End Sub
+
+Private Sub Button_Git_Refresh_Click()
+    Dim Git As New clsGit
+    Dim done As Boolean
+    done = Git.Pull
+    If done Then Status = "Код обновлен"
 End Sub
 
 Private Sub TextBox_Git_Access_Change()
@@ -148,19 +150,37 @@ Private Sub TextBox_Git_Access_Change()
     On Error Resume Next
     With Me.MultiPages.Pages(NumPage.pSettings)
         .Controls(Prefix_Git & "Branch").Locked = False
-        .Controls(Prefix_Git & "Message").Locked = False
+        With .Controls(Prefix_Git & "Message")
+            .Locked = False
+            .Value = vbNullString
+        End With
         .Controls(Prefix_Git & "SHA").Locked = False
         .Controls(Prefix_Git & "AuthorName").Locked = False
         .Controls(Prefix_Git & "AuthorEmail").Locked = False
         With TextBox_Git_Access
+            .Locked = True
+            .SpecialEffect = fmSpecialEffectFlat
+            .BorderStyle = fmBorderStyleSingle
+            .BorderColor = vbGreen
+            .ForeColor = FOREGRAY
+        End With
+    End With
+    Button_Git_Push.Enabled = True
+    Status = "Можно изменять"
+End Sub
+
+Private Sub TextBox_Git_RefreshAccess_Change()
+    If TextBox_Git_RefreshAccess.Value <> GITHUB_REFRESH_ACCESS Then Exit Sub
+    On Error Resume Next
+    With TextBox_Git_RefreshAccess
         .Locked = True
         .SpecialEffect = fmSpecialEffectFlat
         .BorderStyle = fmBorderStyleSingle
         .BorderColor = vbGreen
         .ForeColor = FOREGRAY
-        End With
     End With
-    Status = "Git открыт"
+    Button_Git_Refresh.Enabled = True
+    Status = "Можно обновлять"
 End Sub
 
 'SUBFUNCS
