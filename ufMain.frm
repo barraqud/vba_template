@@ -108,17 +108,7 @@ End Sub
 
 'PROJECT
 Public Sub ProjectInit(Optional ByVal ProjectName As String)
-    'askjdlkjfdkl;asjdhklfjhjdlskhgflkjfdshgkljafshgkjahfklgjhdfkjghkjfdhgkljad
-    'askjdlkjfdkl;asjdhklfjhjdlskhgflkjfdshgkljafshgkjahfklgjhdfkjghkjfdhgkljad
-    'askjdlkjfdkl;asjdhklfjhjdlskhgflkjfdshgkljafshgkjahfklgjhdfkjghkjfdhgkljad
-    'askjdlkjfdkl;asjdhklfjhjdlskhgflkjfdshgkljafshgkjahfklgjhdfkjghkjfdhgkljad
-    'askjdlkjfdkl;asjdhklfjhjdlskhgflkjfdshgkljafshgkjahfklgjhdfkjghkjfdhgkljad
-    'askjdlkjfdkl;asjdhklfjhjdlskhgflkjfdshgkljafshgkjahfklgjhdfkjghkjfdhgkljad
-    'askjdlkjfdkl;asjdhklfjhjdlskhgflkjfdshgkljafshgkjahfklgjhdfkjghkjfdhgkljad
-    'askjdlkjfdkl;asjdhklfjhjdlskhgflkjfdshgkljafshgkjahfklgjhdfkjghkjfdhgkljad
-    'askjdlkjfdkl;asjdhklfjhjdlskhgflkjfdshgkljafshgkjahfklgjhdfkjghkjfdhgkljad
-    'askjdlkjfdkl;asjdhklfjhjdlskhgflkjfdshgkljafshgkjahfklgjhdfkjghkjfdhgkljad
-    'askjdlkjfdkl;asjdhklfjhjdlskhgflkjfdshgkljafshgkjahfklgjhdfkjghkjfdhgkljad
+
 End Sub
 
 'SETTINGS
@@ -139,13 +129,11 @@ Private Sub Button_Git_Push_Click()
     With Me.MultiPages.Pages(NumPage.pSettings).Controls(Prefix_Git & "Message")
         If Len(.Value) <> 0 Then
             Git.Push .Value
+            Status = "Изменения сохранены"
         Else
             MsgBox "Нужно указать описание", vbOKOnly, "Описание закрепления"
         End If
     End With
-    Exit Sub
-BeforeExit:
-    MsgBox "Данные введены неверно!", vbOKOnly, "Имя, email и пароль"
 End Sub
 
 Private Sub Button_Git_Refresh_Click()
