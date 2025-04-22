@@ -218,10 +218,10 @@ End Function
 Private Sub ComponentClearProps(ByRef props As TComponentProps)
     With props
         .cmpName = vbNullString
-        .cmpType = Nothing
+        .cmpType = vbext_ct_StdModule
         .cmpExt = vbNullString
         .dir = vbNullString
-        .fileName = vbNullString
+        .filePath = vbNullString
         .isInExclude = False
         .isInComponents = False
     End With
@@ -291,4 +291,5 @@ End Function
 Private Sub Class_Initialize()
     Init
 End Sub
+
 

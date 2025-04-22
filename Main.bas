@@ -268,7 +268,7 @@ End Function
 
 'Использовать аккуратно, предпочтительно в режиме разработчика
 Public Sub RangeJumpAndSelect(rng As Range)
-    Application.Goto rng.Cells(1, 1), Scroll:=True
+    Application.GoTo rng.Cells(1, 1), Scroll:=True
     rng.Select
 End Sub
 

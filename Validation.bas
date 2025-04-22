@@ -94,7 +94,7 @@ End Sub
 Public Function getLastRow(Optional withScroll As Boolean = True) As Range
     With ShtMainData.Cells(1, 1).CurrentRegion
         Set getLastRow = .Rows(.Rows.Count + 1)
-        If withScroll Then Application.Goto getLastRow, False
+        If withScroll Then Application.GoTo getLastRow, False
     End With
 End Function
 
