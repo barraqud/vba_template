@@ -92,11 +92,11 @@ Sub ReadTemplates()
     Dim dict As Dictionary
     
     On Error GoTo BeforeExit
-'    templ.Import
-'    TemplateTitle = templ.Name
-'    Set dict = templ.ParseFile
-        TemplateTitle = "Мок"
-        Set dict = MockTemplate
+    '    templ.Import
+    '    TemplateTitle = templ.Name
+    '    Set dict = templ.ParseFile
+    TemplateTitle = "Мок"
+    Set dict = MockTemplate
     With ufTemplate
         .DrawTemplate TemplateTitle, dict
         .Show vbModal

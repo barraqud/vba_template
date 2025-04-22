@@ -104,12 +104,12 @@ Private Sub UpdateComponents(ByVal newData As Dictionary)
         props = ComponentGetProps(key)
         If props.isInExclude Then GoTo Continue
         If props.cmpType = vbext_ct_MSForm Then
-        Set cmp = Self.VBComponents(cmp.Name)
-        With cmp.CodeModule
-            .DeleteLines 1, .CountOfLines
-            .AddFromString newData(key)
-        End With
-        GoTo Continue
+            Set cmp = Self.VBComponents(cmp.Name)
+            With cmp.CodeModule
+                .DeleteLines 1, .CountOfLines
+                .AddFromString newData(key)
+            End With
+            GoTo Continue
         End If
         Set cmp = tempProject.VBProject.VBComponents.Add(props.cmpType)
         With cmp
@@ -126,7 +126,6 @@ Private Sub UpdateComponents(ByVal newData As Dictionary)
             Set cmp = .Item(props.cmpName)
             If cmp Is Nothing Then GoTo NoComponent
             cmp.Name = "DEL_" & props.cmpName
-            DoEvents
             .Remove cmp
             DoEvents
 NoComponent:
@@ -291,5 +290,4 @@ End Function
 Private Sub Class_Initialize()
     Init
 End Sub
-
 

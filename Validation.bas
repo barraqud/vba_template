@@ -1,7 +1,6 @@
 '@Folder("VBAProject")
 Option Explicit
 
-
 Public Sub ValidateSubStrExist(ByRef TargetRng As Range)
     Dim errorsArr() As Variant
     Dim elem As Variant
@@ -115,5 +114,4 @@ NextCell:
     Next
     
 End Sub
-
 

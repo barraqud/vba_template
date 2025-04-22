@@ -168,11 +168,11 @@ Function ChangeTextCharset(ByVal txt$, ByVal DestCharset$, _
     On Error Resume Next: Err.Clear
     With CreateObject("ADODB.Stream")
         .Type = 2: .Mode = 3
-        If Len(SourceCharset$) Then .Charset = SourceCharset$    ' указываем исходную кодировку
+        If Len(SourceCharset$) Then .Charset = SourceCharset$ ' указываем исходную кодировку
         .Open
         .WriteText txt$
         .Position = 0
-        .Charset = DestCharset$    ' назначаем новую кодировку
+        .Charset = DestCharset$                  ' назначаем новую кодировку
         ChangeTextCharset = .ReadText
         .Close
     End With
@@ -214,6 +214,7 @@ Public Function SheetByCodename(ByVal codename As String) As Worksheet
     index = ThisWorkbook.VBProject.VBComponents(codename).Properties("Index").Value
     Set SheetByCodename = Worksheets(index)
 End Function
+
 '=========================================================== RANGE ===========================================================
 
 Public Function RangeByName(Name As String, Optional DefaultRng As Range) As Range
@@ -339,6 +340,7 @@ Public Function ChunksByColumn(Optional ByVal ColNum As Long = 1) As Dictionary
     Set dataRng = RangeMainData
     Set ChunksByColumn = ChunksParse(dataRng, ColNum)
 End Function
+
 '=========================================================== ARRAY ===========================================================
 Public Function ArrayLen(ByRef arr As Variant) As Long
     ArrayLen = UBound(arr) - LBound(arr) + 1
@@ -687,19 +689,4 @@ End Function
 Function StringEscComma(ByVal str As String) As String
     StringEscComma = Replace(str, ",", Chr(130))
 End Function
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -144,7 +144,6 @@ NoValue:
     On Error GoTo 0
 End Sub
 
-
 Private Sub SelectBlock_Change()
     Debug.Print SelectBlock.Value
 End Sub
@@ -157,7 +156,7 @@ End Sub
 Public Sub CreateLabel(ByVal Caption As String, Width As Long, Height As Long, _
                        Optional TopOffset As Long = 0, Optional LeftOffset As Long = 0)
     With Parent.Controls
-    Set LabelBlock = .Add("Forms.Label.1", Join(Array("Label", Name, Row, Column), "_"), True)
+        Set LabelBlock = .Add("Forms.Label.1", Join(Array("Label", Name, Row, Column), "_"), True)
     End With
     On Error Resume Next
     With LabelBlock
@@ -175,53 +174,53 @@ Public Sub CreateLabel(ByVal Caption As String, Width As Long, Height As Long, _
         .BorderStyle = fmBorderStyleNone
         .KeepScrollBarsVisible = fmScrollBarsNone
         .ZOrder = fmZOrderFront
-    If IsOrientVert Then
-        .Top = TopOffset + ((Height * 2 + 10) * Row)
-    Else
-        .Left = LeftOffset + ((Width * 2 + 10) * Column)
-    End If
+        If IsOrientVert Then
+            .Top = TopOffset + ((Height * 2 + 10) * Row)
+        Else
+            .Left = LeftOffset + ((Width * 2 + 10) * Column)
+        End If
     End With
 End Sub
 
 Private Sub setInput()
     With Parent.Controls
-    Select Case m_ArgType
-    Case "Boolean"
-        Set Self = .Add("Forms.CheckBox.1", Join(Array("Label", Name, Row, Column), "_"), True)
-        Set CheckBlock = Self
-    Case "FuncName"
-        m_BlockType = "ComboBox"
-        Set Self = .Add("Forms.ComboBox.1", Join(Array("Label", Name, Row, Column), "_"), True)
-        Set SelectBlock = Self
-    Case Else
-        m_BlockType = "TextBox"
-        Set Self = .Add("Forms.TextBox.1", Join(Array("Label", Name, Row, Column), "_"), True)
-        Set TextBlock = Self
-    End Select
+        Select Case m_ArgType
+        Case "Boolean"
+            Set Self = .Add("Forms.CheckBox.1", Join(Array("Label", Name, Row, Column), "_"), True)
+            Set CheckBlock = Self
+        Case "FuncName"
+            m_BlockType = "ComboBox"
+            Set Self = .Add("Forms.ComboBox.1", Join(Array("Label", Name, Row, Column), "_"), True)
+            Set SelectBlock = Self
+        Case Else
+            m_BlockType = "TextBox"
+            Set Self = .Add("Forms.TextBox.1", Join(Array("Label", Name, Row, Column), "_"), True)
+            Set TextBlock = Self
+        End Select
     End With
 End Sub
 
 Sub pars()
-With LabelBlock
-    .Left = 4
-    .Top = 0
-    .Height = 12.6
-    .Width = 110
-    .TextAlign = fmTextAlignLeft
-    .BorderStyle = fmBorderStyleNone
-    .BackStyle = fmBackStyleTransparent
-    .ForeColor = FOREGRAY
-End With
+    With LabelBlock
+        .Left = 4
+        .Top = 0
+        .Height = 12.6
+        .Width = 110
+        .TextAlign = fmTextAlignLeft
+        .BorderStyle = fmBorderStyleNone
+        .BackStyle = fmBackStyleTransparent
+        .ForeColor = FOREGRAY
+    End With
 
-With Self
-    .Left = 0
-    .Top = 18
-    .Height = 20
-    .Width = 120
-    .TextAlign = fmTextAlignLeft
-    .BorderStyle = fmBorderStyleSingle
-    .BorderColor = FOREGRAY
-End With
+    With Self
+        .Left = 0
+        .Top = 18
+        .Height = 20
+        .Width = 120
+        .TextAlign = fmTextAlignLeft
+        .BorderStyle = fmBorderStyleSingle
+        .BorderColor = FOREGRAY
+    End With
 End Sub
 
 Public Sub CreateInput(ByVal Caption As String, ByVal Place As String, _
@@ -254,5 +253,6 @@ Public Sub CreateInput(ByVal Caption As String, ByVal Place As String, _
 End Sub
 
 Private Sub Class_Initialize()
-Tip = False
+    Tip = False
 End Sub
+

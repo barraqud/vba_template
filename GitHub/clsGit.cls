@@ -13,7 +13,7 @@ Private Type TCommit
     treeSHA As String
 End Type
 
-Public Enum HttpMethod
+Private Enum HttpMethod
     MGET
     MPOST
     MPATCH

@@ -79,13 +79,13 @@ BeforeExit:
 End Sub
 
 Public Function ParseSaved() As Dictionary
-Dim Chunks As New clsChunks
-Dim rng As Range
-With ShtOptionsMainData.Cells(1).CurrentRegion
-    Set rng = RangeExclude(.Cells, .Rows(1))
-End With
-Chunks.Init 1, , rng
-Set ParseSaved = Chunks.Chunks
+    Dim Chunks As New clsChunks
+    Dim rng As Range
+    With ShtOptionsMainData.Cells(1).CurrentRegion
+        Set rng = RangeExclude(.Cells, .Rows(1))
+    End With
+    Chunks.Init 1, , rng
+    Set ParseSaved = Chunks.Chunks
 End Function
 
 Public Sub Fill()

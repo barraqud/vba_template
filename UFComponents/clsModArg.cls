@@ -13,6 +13,7 @@ Private m_ArgPlaceholder As String
 Public Property Get ArgType() As String
     ArgType = m_ArgType
 End Property
+
 Public Property Get Value() As String
     Select Case True
     Case m_ArgType = "Boolean"
@@ -23,6 +24,7 @@ Public Property Get Value() As String
         Value = ctrl.text
     End Select
 End Property
+
 Public Property Let Value(v As String)
     Select Case True
     Case m_ArgType = "Boolean"
@@ -35,8 +37,8 @@ Public Property Let Value(v As String)
 End Property
 
 Public Sub Add(Wrap As Variant, ByVal Func As String, ByVal ArgName As String, ByVal arg As String, _
-ByVal IsOptional As Boolean, index As Long, ColIndex As Long, Optional modifiers As Dictionary, _
-Optional Width As Long = 60, Optional Height As Long = 20, Optional loffset As Long = 220)
+               ByVal IsOptional As Boolean, index As Long, ColIndex As Long, Optional modifiers As Dictionary, _
+               Optional Width As Long = 60, Optional Height As Long = 20, Optional loffset As Long = 220)
     If Not Len(ArgName) > 0 Then Exit Sub
     Set Page = Wrap
     m_ArgType = arg
@@ -44,7 +46,7 @@ Optional Width As Long = 60, Optional Height As Long = 20, Optional loffset As L
     m_ArgPlaceholder = ArgName
     If m_ArgType = "FuncName" And Not modifiers Is Nothing Then Set modifiersList = modifiers
     With Page
-    Select Case m_ArgType
+        Select Case m_ArgType
         Case "Boolean"
             Set checker = .Controls.Add("Forms.CheckBox.1", "CheckBox_" & Join(Array("Arg", index, Func, ColIndex), "_"))
             CtrlDefaultParams checker, Width, Height, index * 30 + 10, loffset + (ColIndex * 70), m_ArgPlaceholder, index
@@ -85,12 +87,12 @@ Public Sub Clear()
 End Sub
 
 Private Sub ctrl_Change()
-ctrl.BackStyle = IIf(Len(ctrl.text) = 0, fmBackStyleTransparent, fmBackStyleOpaque)
+    ctrl.BackStyle = IIf(Len(ctrl.text) = 0, fmBackStyleTransparent, fmBackStyleOpaque)
 End Sub
 
 Private Sub ctrl_DropButtonClick()
-Dim formula As Variant
-Page.Parent.Parent.Hide
+    Dim formula As Variant
+    Page.Parent.Parent.Hide
     On Error GoTo NoValue
     Set formula = Application.InputBox("Введите параметры через "",""", "Список параметров", ctrl.text, Type:=64)
     ctrl.Value = Join(formula, ", ")

@@ -11,4 +11,3 @@ Private Sub Class_Initialize()
     Dim Opt As clsOptionRow
     
 End Sub
-

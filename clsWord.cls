@@ -51,7 +51,7 @@ BeforeExit:
 End Sub
 
 Public Function Read(fileName As String) As Document
-        On Error GoTo BeforeExit
+    On Error GoTo BeforeExit
     With App
         .Visible = True
         .DisplayAlerts = 0
