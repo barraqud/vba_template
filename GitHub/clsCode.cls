@@ -57,67 +57,6 @@ Public Sub Compare(Optional newData As Dictionary, Optional isPushing As Boolean
 End Sub
 
 'Private
-Private Sub UpdateComponents(ByVal newData As Dictionary)
-    Dim key As Variant
-    Dim cmp As VBIDE.VBComponent
-    Dim tempProject As Workbook
-    Dim props As TComponentProps
-    On Error GoTo BeforeExit
-    SwitchAutomation
-    
-    Set tempProject = Application.Workbooks.Add
-    For Each key In newData.Keys
-        props = ComponentGetProps(key)
-        If props.isInExclude Then GoTo Continue
-        Set cmp = tempProject.VBProject.VBComponents.Add(props.cmpType)
-        With cmp
-            .Name = props.cmpName
-            With .CodeModule
-                .DeleteLines 1, .CountOfLines
-                .AddFromString newData(key)
-            End With
-            .Export props.filePath
-        End With
-        Set cmp = Nothing
-        On Error Resume Next
-        With Self.VBComponents
-            Set cmp = .Item(props.cmpName)
-            If Not cmp Is Nothing Then .Remove cmp
-            DoEvents
-            .Import props.filePath
-        End With
-        Kill props.filePath
-Continue:
-    Next
-    tempProject.Close False
-
-BeforeExit:
-    If Err.Number <> 0 Then Debug.Print "error: "; Err.Number & ", " & Err.Source & ": " & Err.Description
-    SwitchAutomation True
-End Sub
-
-Private Sub componentsRemove(newData As Dictionary)
-    Dim key As Variant
-    Dim cmp As VBIDE.VBComponent
-    Dim props As TComponentProps
-    
-    On Error GoTo Continue
-    SwitchAutomation
-    For Each key In Components.Keys
-        props = ComponentGetProps(key)
-        If props.isInExclude Then GoTo Continue
-        Debug.Print "not exist: " & props.cmpName
-        With ThisWorkbook.VBProject.VBComponents
-            Set cmp = .Item(props.cmpName)
-            Debug.Print "delete: " & cmp.Name    '.Remove cmp
-        End With
-Continue:
-    Next
-BeforeExit:
-    If Err.Number <> 0 Then Debug.Print "error: "; Err.Number & ", " & Err.Source & ": " & Err.Description
-    SwitchAutomation True
-End Sub
-
 Private Sub Init()
     Dim dict As Dictionary
     Dim dir As String
@@ -145,6 +84,76 @@ Private Sub Init()
         Components.Add path, dict
 Continue:
     Next
+End Sub
+
+Private Sub UpdateComponents(ByVal newData As Dictionary)
+    Dim key As Variant
+    Dim cmp As VBIDE.VBComponent
+    Dim tempProject As Workbook
+    Dim props As TComponentProps
+    On Error GoTo BeforeExit
+    SwitchAutomation
+    
+    Set tempProject = Application.Workbooks.Add
+    For Each key In newData.Keys
+        props = ComponentGetProps(key)
+        If props.isInExclude Then GoTo Continue
+        Set cmp = tempProject.VBProject.VBComponents.Add(props.cmpType)
+        With cmp
+            .Name = props.cmpName
+            With .CodeModule
+                .DeleteLines 1, .CountOfLines
+                .AddFromString newData(key)
+            End With
+            .Export props.filePath
+        End With
+        Set cmp = Nothing
+        On Error Resume Next
+        With Self.VBComponents
+            Set cmp = .Item(props.cmpName)
+            If Not cmp Is Nothing Then
+                cmp.Name = "DEL_" & props.cmpName
+                DoEvents
+                .Remove cmp
+                DoEvents
+            End If
+            .Import props.filePath
+        End With
+        Kill props.filePath
+        Debug.Print "updated: " & props.cmpName
+        ComponentClearProps props
+Continue:
+    Next
+    tempProject.Close False
+    DoEvents
+
+BeforeExit:
+    If Err.Number <> 0 Then Debug.Print "error: "; Err.Number & ", " & Err.Source & ": " & Err.Description
+    SwitchAutomation True
+End Sub
+
+Private Sub componentsRemove(newData As Dictionary)
+    Dim key As Variant
+    Dim cmp As VBIDE.VBComponent
+    Dim props As TComponentProps
+    
+    On Error GoTo Continue
+    SwitchAutomation
+    For Each key In Components.Keys
+        props = ComponentGetProps(key)
+        If props.isInExclude Then GoTo Continue
+        Debug.Print "not exist: " & props.cmpName
+        With ThisWorkbook.VBProject.VBComponents
+            Set cmp = .Item(props.cmpName)
+            .Remove cmp
+        End With
+        Debug.Print "deleted: " & props.cmpName
+        ComponentClearProps props
+Continue:
+    Next
+BeforeExit:
+    If Err.Number <> 0 Then Debug.Print "error: "; Err.Number & ", " & Err.Source & ": " & Err.Description
+    SwitchAutomation True
 End Sub
 
 Private Function ComponentIgnore(ByVal cmpPath As String) As Boolean

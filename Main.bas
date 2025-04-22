@@ -13,17 +13,6 @@ Public Const RePattern_variable = "<<(.+)>>"
 Public Const RePattern_email As String = "[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}"
 Public Const RePattern_rngstring As String = "(\'[A-ZА-ЯЁ\s0-9]+\'\!)?\$?[A-Z]{1,3}\$?\d+"
 Public Const RePattern_cell As String = "\$?[A-Z]{1,3}\$?\d+"
-'=========================================================== TYPE ===========================================================
-'=========================================================== ENUM ===========================================================
-Public Enum EORientation
-    Vertical = 0
-    Horizontal = 1
-End Enum
-
-Public Enum EDimention
-    ERow = 2
-    ECol = 1
-End Enum
 
 '=========================================================== OPERATIONS ===========================================================
 'вкл/выкл различные функции отрисовки
@@ -279,7 +268,7 @@ End Function
 
 'Использовать аккуратно, предпочтительно в режиме разработчика
 Public Sub RangeJumpAndSelect(rng As Range)
-    Application.Goto rng.Cells(1, 1), Scroll:=True
+    Application.GoTo rng.Cells(1, 1), Scroll:=True
     rng.Select
 End Sub
 
@@ -698,6 +687,7 @@ End Function
 Function StringEscComma(ByVal str As String) As String
     StringEscComma = Replace(str, ",", Chr(130))
 End Function
+
 
 
 

@@ -106,3 +106,4 @@ End Sub
 Private Sub checker_Change()
     Debug.Print "checker_Change: "; checker.Value
 End Sub
+
