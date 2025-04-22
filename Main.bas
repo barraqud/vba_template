@@ -1,4 +1,5 @@
 '@Folder("VBAProject")
+'@ModuleDescription("Основные процедуры. Разбиты на блоки")
 Option Explicit
 '=========================================================== CONSTANTS ===========================================================
 Public Const BACKGRAY As Long = &HE0E0E0
@@ -41,7 +42,7 @@ Public Function MainDataHeaderToDict() As Dictionary
     Dim HeaderArr As Variant
     Set headerRng = RangeGetMerged(ShtMainData.Cells(1).CurrentRegion)
     HeaderArr = headerRng.Value2
-    Set MainDataHeaderToDict = ArrayToDictByCol(HeaderArr)
+    Set MainDataHeaderToDict = Array2DToDictByCol(HeaderArr)
 End Function
 
 '=========================================================== WRAPPERS ===========================================================
@@ -91,7 +92,7 @@ Public Sub Stopwatch(ByVal SubName As String, ParamArray SubArguments() As Varia
     Dim X As Single
     X = Timer
     ScriptRunner SubName, True, SubArguments
-    Debug.Print MySub; "executed in "; Timer - X
+    Debug.Print SubName; "executed in "; Timer - X
 End Sub
 
 'Обертка для запуска модификаторов
@@ -145,19 +146,19 @@ Public Sub CtrlDefaultParams(ctrl As Variant, ByVal Width As Long, ByVal Height 
     On Error GoTo 0
 End Sub
 
-Public Function AddTextBox(Wrap As Variant, Name As String, Index As Long, Optional Width As Long = 60, Optional Height As Long = 20, Optional Left As Long = 80, Optional helper As String, Optional isDropDown As Boolean = False) As MSForms.TextBox
+Public Function AddTextBox(Wrap As Variant, Name As String, index As Long, Optional Width As Long = 60, Optional Height As Long = 20, Optional Left As Long = 80, Optional helper As String, Optional isDropDown As Boolean = False) As MSForms.TextBox
     Dim placeHolder As MSForms.TextBox
     Dim Box As MSForms.TextBox
     With Wrap
         Set placeHolder = .Controls.Add("Forms.TextBox.1", "Placeholder_" & Name)
-        CtrlDefaultParams placeHolder, Width, Height, Index * 30 + 10, Left, , Index
+        CtrlDefaultParams placeHolder, Width, Height, index * 30 + 10, Left, , index
         placeHolder.text = helper
         placeHolder.MultiLine = True
         placeHolder.TextAlign = fmTextAlignLeft
         placeHolder.Enabled = False
         
         Set Box = .Controls.Add("Forms.TextBox.1", Name)
-        CtrlDefaultParams Box, Width, Height, Index * 30 + 10, Left, , Index
+        CtrlDefaultParams Box, Width, Height, index * 30 + 10, Left, , index
         If isDropDown Then
             Box.DropButtonStyle = fmDropButtonStyleReduce
             Box.ShowDropButtonWhen = fmShowDropButtonWhenAlways
@@ -219,12 +220,11 @@ End Function
 '=========================================================== SHEET ===========================================================
 'Codename назначается в настройках worksheet('(Name)')
 Public Function SheetByCodename(ByVal codename As String) As Worksheet
-    Dim Index As Long
+    Dim index As Long
 
-    Index = ThisWorkbook.VBProject.VBComponents(codename).Properties("Index").Value
-    Set SheetByCodename = Worksheets(Index)
+    index = ThisWorkbook.VBProject.VBComponents(codename).Properties("Index").Value
+    Set SheetByCodename = Worksheets(index)
 End Function
-
 '=========================================================== RANGE ===========================================================
 
 Public Function RangeByName(Name As String, Optional DefaultRng As Range) As Range
@@ -245,11 +245,11 @@ End Function
 'Вырезать из Range SubRange
 Public Function RangeExclude(rng As Range, Optional RngMinus As Range, Optional cutRow As Long, Optional cutCol As Long) As Range
     If Not RngMinus Is Nothing Then
-        If rng.Rows.count > RngMinus.Rows.count Then cutRow = RngMinus.Rows.count
-        If rng.Columns.count > RngMinus.Columns.count Then cutCol = RngMinus.Columns.count
+        If rng.Rows.Count > RngMinus.Rows.Count Then cutRow = RngMinus.Rows.Count
+        If rng.Columns.Count > RngMinus.Columns.Count Then cutCol = RngMinus.Columns.Count
     End If
     With rng
-        Set RangeExclude = .Resize(.Rows.count - cutRow, .Rows.Columns.count - cutCol).offset(cutRow, cutCol)
+        Set RangeExclude = .Resize(.Rows.Count - cutRow, .Rows.Columns.Count - cutCol).offset(cutRow, cutCol)
     End With
 End Function
 
@@ -259,10 +259,10 @@ Public Function RangeGetMerged(rng As Range) As Range
     Dim Row As Long
     With rng
         With .Rows(1)
-            For col = 1 To .Columns.count
+            For col = 1 To .Columns.Count
                 If Not .Columns(col).MergeCells Then GoTo Continue
-                col = col + .Columns(col).MergeArea.Columns.count - 1
-                If .Columns(col).MergeArea.Rows.count > Row Then Row = .Columns(col).MergeArea.Rows.count
+                col = col + .Columns(col).MergeArea.Columns.Count - 1
+                If .Columns(col).MergeArea.Rows.Count > Row Then Row = .Columns(col).MergeArea.Rows.Count
 Continue:
             Next
         End With
@@ -279,13 +279,13 @@ End Function
 
 'Использовать аккуратно, предпочтительно в режиме разработчика
 Public Sub RangeJumpAndSelect(rng As Range)
-    Application.GoTo rng.Cells(1, 1), Scroll:=True
+    Application.Goto rng.Cells(1, 1), Scroll:=True
     rng.Select
 End Sub
 
 '=========================================================== FILE ===========================================================
 'Если AskUser=True то спрашивает где сохранить файл(при отмене укажет путь в текущую папку)
-Public Function FileNameCreate(Optional ByVal filename As String, Optional AskUser As Boolean = False, Optional Title As String = "Выберите путь для сохранения") As String
+Public Function FileNameCreate(Optional ByVal fileName As String, Optional AskUser As Boolean = False, Optional Title As String = "Выберите путь для сохранения") As String
     Dim dir As FileDialog
     Dim sItem As String
     If AskUser = True Then
@@ -293,7 +293,7 @@ Public Function FileNameCreate(Optional ByVal filename As String, Optional AskUs
         With dir
             .Title = Title
             .AllowMultiSelect = False
-            .InitialFileName = FilePathCurrent(filename)
+            .InitialFileName = FilePathCurrent(fileName)
             If .Show <> -1 Then GoTo NoPath
             FileNameCreate = .SelectedItems(1)
 
@@ -302,13 +302,13 @@ Public Function FileNameCreate(Optional ByVal filename As String, Optional AskUs
     End If
 NoPath:
     Set dir = Nothing
-    FileNameCreate = FilePathCurrent(filename)
+    FileNameCreate = FilePathCurrent(fileName)
 End Function
 
-Public Function FilePathCurrent(Optional filename As String) As String
+Public Function FilePathCurrent(Optional fileName As String) As String
     Dim path As String
     path = ThisWorkbook.path
-    If Len(filename) > 0 Then path = path & "\" & filename
+    If Len(fileName) > 0 Then path = path & "\" & fileName
     FilePathCurrent = Application.Clean(path)
 End Function
 
@@ -321,14 +321,14 @@ Public Function ChunksParse(rng As Range, ColNum As Long, Optional ColSize As Lo
     Dim lastRow As Long, i As Long
 
     With rng
-        lastRow = .Rows.count + .Row - 1
+        lastRow = .Rows.Count + .Row - 1
         'note: counts rm columns from 1
         Set FilterRng = .Columns(ColNum)
         If ColSize > 1 Then Set FilterRng = FilterRng.Resize(ColumnSize:=ColSize)
         With FilterRng.SpecialCells(xlCellTypeConstants, 7)
 
-            For i = .Areas.count To 1 Step -1
-                Set ChunkRng = .Areas(i).Resize(lastRow - .Areas(i).Row + 1, rng.Columns.count)
+            For i = .Areas.Count To 1 Step -1
+                Set ChunkRng = .Areas(i).Resize(lastRow - .Areas(i).Row + 1, rng.Columns.Count)
                 Set Chunk = New clsChunk
                 Chunk.Create ChunkRng
                 If ChunksParse.Exists(Chunk.ID) Then GoTo ChunksDuplicated
@@ -352,7 +352,7 @@ Public Function ChunksByColumn(Optional ByVal ColNum As Long = 1) As Dictionary
 End Function
 '=========================================================== ARRAY ===========================================================
 Public Function ArrayLen(ByRef arr As Variant) As Long
-    LenArray = UBound(arr) - LBound(arr) + 1
+    ArrayLen = UBound(arr) - LBound(arr) + 1
 End Function
 
 Public Function ArrayContains(SearchVal As Variant, arr As Variant) As Boolean
@@ -363,8 +363,18 @@ Public Function ArrayContains(SearchVal As Variant, arr As Variant) As Boolean
             Exit Function
         End If
     Next i
-    IsInArray = False
+    ArrayContains = False
 
+End Function
+
+Public Function ArrayPush(ByVal arr As Variant, ByVal Value As Variant) As Variant
+    On Error Resume Next
+    ReDim Preserve arr(1 To UBound(arr) + 1)
+    If IsEmpty(arr) Then ReDim arr(1 To 1)
+    
+    arr(UBound(arr)) = Value
+    ArrayPush = arr
+    On Error GoTo 0
 End Function
 
 Public Function ArraySlice(ByRef arr As Variant, Optional startPos As Long, Optional endPos As Long) As Variant
@@ -446,7 +456,7 @@ Public Function ArrayUpdateColumns(arr As Variant, ByVal FnDict As Dictionary) A
     Dim colIdx As Variant
     Dim offset As Long
     Dim done As New Dictionary
-    If FnDict.count = 0 Then
+    If FnDict.Count = 0 Then
         ArrayUpdateColumns = arr
         Exit Function
     End If
@@ -529,7 +539,7 @@ Public Function ArrayToDict(ByVal Keys As Variant, ByVal ValArr As Variant, Opti
     If IsNumeric(Keys) Then
         For i = LBound(ValArr) To UBound(ValArr)
             key = Trim(ValArr(i, Keys))
-            val = ArrayCutByIndex(ValArr, i)
+            val = ArraySlice(ValArr, ERow, i)
             If Len(SubFunc) > 0 Then val = Application.Run(SubFunc, val)
             dict(key) = ArrayPush(dict(key), val)
         Next
@@ -539,7 +549,7 @@ Public Function ArrayToDict(ByVal Keys As Variant, ByVal ValArr As Variant, Opti
         For i = LBound(Keys) To UBound(Keys)
             key = Trim(Keys(i))
             
-            val = ArrayCutByIndex(ValArr, i)
+            val = ArraySlice(ValArr, ERow, i)
             If Len(SubFunc) > 0 Then val = Application.Run(SubFunc, val)
             dict(key) = ArrayPush(dict(key), val)
         Next
@@ -548,7 +558,7 @@ Public Function ArrayToDict(ByVal Keys As Variant, ByVal ValArr As Variant, Opti
 End Function
 
 'Объединяет список со списками в 2мерный список
-Public Function ArrayMergeTo2D(arr As Variant, ParamArray exclude() As Variant) As Variant
+Public Function ArrayMergeTo2D(arr As Variant, ParamArray Exclude() As Variant) As Variant
     Dim outputArr As Variant
     Dim i As Long, j As Long
     i = LBound(arr)
@@ -688,6 +698,7 @@ End Function
 Function StringEscComma(ByVal str As String) As String
     StringEscComma = Replace(str, ",", Chr(130))
 End Function
+
 
 
 

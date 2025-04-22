@@ -10,14 +10,14 @@ Private RE_Variable As New clsRE
 Private Variables As New Dictionary
 Private Tables As New Collection
 
-Public Sub Import(Optional ByVal filepath As String)
-    If Len(filepath) = 0 Then
+Public Sub Import(Optional ByVal filePath As String)
+    If Len(filePath) = 0 Then
         SetFile
     Else
-        path = filepath
+        path = filePath
     End If
     With RE_Prefix.ExecuteString(path)
-        If .count = 0 Then GoTo Failed
+        If .Count = 0 Then GoTo Failed
         Name = .Item(0).submatches.Item(0)
     End With
         
@@ -40,12 +40,12 @@ Public Sub ParseFile()
     SwitchAutomation
     With wDoc
         'Constant variables
-        If .Shapes.count = 0 Then GoTo NoVariables
-        For i = 1 To .Shapes.count
+        If .Shapes.Count = 0 Then GoTo NoVariables
+        For i = 1 To .Shapes.Count
             On Error GoTo NextVar
             Set curr = .Shapes(i)
             With RE_Variable.ExecuteString(curr.TextFrame.TextRange.text)
-                If .count = 0 Then GoTo NextVar
+                If .Count = 0 Then GoTo NextVar
                 Variables.Add .Item(0).submatches.Item(0), i
             End With
 NextVar:
@@ -53,21 +53,21 @@ NextVar:
         Next
         outputDict.Add "Variables", Variables
 NoVariables:
-        If .Tables.count = 0 Then GoTo NoTables
+        If .Tables.Count = 0 Then GoTo NoTables
         Dim Tables As New Collection
         Set Tables = New Collection
         For Each curr In .Tables
             Set tableDict = New Dictionary
-            For i = 1 To curr.Columns.count
-                Set wRng = curr.cell(curr.Rows.count, i).Range
+            For i = 1 To curr.Columns.Count
+                Set wRng = curr.Cell(curr.Rows.Count, i).Range
                 With RE_Variable.ExecuteString(wRng.text)
-                    If .count = 0 Then GoTo NextCol
+                    If .Count = 0 Then GoTo NextCol
                     tableDict.Add .Item(0).submatches.Item(0), i
                 End With
 NextCol:
                 If Err.Number <> 0 Then Err.Clear
             Next
-            If tableDict.count > 0 Then Tables.Add tableDict
+            If tableDict.Count > 0 Then Tables.Add tableDict
         Next
         outputDict.Add "Tables", Tables
 NoTables:
@@ -79,7 +79,7 @@ BeforeExit:
 End Sub
 
 Public Function ParseSaved() As Dictionary
-Dim Chunks As New ClsChunks
+Dim Chunks As New clsChunks
 Dim rng As Range
 With ShtOptionsMainData.Cells(1).CurrentRegion
     Set rng = RangeExclude(.Cells, .Rows(1))
@@ -92,9 +92,9 @@ Public Sub Fill()
     ShtOptionsMainData.Cells(1).CurrentRegion
 End Sub
 
-Private Sub SetFile(Optional filepath As String)
+Private Sub SetFile(Optional filePath As String)
     Dim i As Long
-    If Len(filepath) = 0 Then
+    If Len(filePath) = 0 Then
         ' Open the file dialog
         With Application.FileDialog(msoFileDialogOpen)
             .InitialFileName = FilePathCurrent

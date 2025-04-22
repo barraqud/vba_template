@@ -35,7 +35,7 @@ Public Property Let Value(v As String)
 End Property
 
 Public Sub Add(Wrap As Variant, ByVal Func As String, ByVal ArgName As String, ByVal arg As String, _
-ByVal IsOptional As Boolean, Index As Long, ColIndex As Long, Optional modifiers As Dictionary, _
+ByVal IsOptional As Boolean, index As Long, ColIndex As Long, Optional modifiers As Dictionary, _
 Optional Width As Long = 60, Optional Height As Long = 20, Optional loffset As Long = 220)
     If Not Len(ArgName) > 0 Then Exit Sub
     Set Page = Wrap
@@ -46,25 +46,25 @@ Optional Width As Long = 60, Optional Height As Long = 20, Optional loffset As L
     With Page
     Select Case m_ArgType
         Case "Boolean"
-            Set checker = .Controls.Add("Forms.CheckBox.1", "CheckBox_" & Join(Array("Arg", Index, Func, ColIndex), "_"))
-            CtrlDefaultParams checker, Width, Height, Index * 30 + 10, loffset + (ColIndex * 70), m_ArgPlaceholder, Index
+            Set checker = .Controls.Add("Forms.CheckBox.1", "CheckBox_" & Join(Array("Arg", index, Func, ColIndex), "_"))
+            CtrlDefaultParams checker, Width, Height, index * 30 + 10, loffset + (ColIndex * 70), m_ArgPlaceholder, index
             checker.TextAlign = fmTextAlignLeft
         Case "FuncName"
-            Set dropdown = .Controls.Add("Forms.ComboBox.1", "ComboBox_" & Join(Array("Arg", Index, Func, ColIndex), "_"))
+            Set dropdown = .Controls.Add("Forms.ComboBox.1", "ComboBox_" & Join(Array("Arg", index, Func, ColIndex), "_"))
             dropdown.List = modifiersList.Keys
-            CtrlDefaultParams dropdown, Width, Height, Index * 30 + 10, loffset + (ColIndex * 70), , Index
+            CtrlDefaultParams dropdown, Width, Height, index * 30 + 10, loffset + (ColIndex * 70), , index
             dropdown.TextAlign = fmTextAlignLeft
         Case "Variant"
-            Set ctrl = AddTextBox(Page, Join(Array("Arg", Index, Func, ColIndex), "_"), Index, Width, Height, loffset + (ColIndex * 70), m_ArgPlaceholder, True)
+            Set ctrl = AddTextBox(Page, Join(Array("Arg", index, Func, ColIndex), "_"), index, Width, Height, loffset + (ColIndex * 70), m_ArgPlaceholder, True)
         Case Else
-            Set ctrl = AddTextBox(Page, Join(Array("Arg", Index, Func, ColIndex), "_"), Index, Width, Height, loffset + (ColIndex * 70), m_ArgPlaceholder, False)
+            Set ctrl = AddTextBox(Page, Join(Array("Arg", index, Func, ColIndex), "_"), index, Width, Height, loffset + (ColIndex * 70), m_ArgPlaceholder, False)
         End Select
     End With
 
 End Sub
 
 Public Function Validate() As Boolean
-    Dim s As MSForms.CheckBox
+    Dim S As MSForms.CheckBox
     Select Case True
     Case m_ArgType = "Long"
         Validate = IsNumeric(ctrl.text)

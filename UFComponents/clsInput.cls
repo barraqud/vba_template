@@ -1,19 +1,20 @@
 '@Folder("UFComponents")
 Option Explicit
 
+'@VariableDescription("It's a thing")
 Public Parent As Variant
 Public Name As String
 Public Row As Long
 Public Column As Long
 Public IsOrientVert As Boolean
+Public Tip As Boolean
 
-Private Self As MSForms.Control
+Private Self As Variant
 Private WithEvents LabelBlock As MSForms.Label
 Private WithEvents TextBlock As MSForms.TextBox
 Private WithEvents CheckBlock As MSForms.CheckBox
 Private WithEvents SelectBlock As MSForms.ComboBox
 
-Public Tip As Boolean
 Private m_TipText As String
 Private m_BlockType As String
 Private m_SelectList As Dictionary
@@ -85,16 +86,16 @@ Public Sub Add(ParentBlock As Variant, ByVal SubName As String, Optional InitVal
     If TipText Then m_TipText = TipText
     
     On Error GoTo BeforeExit
-    Set LabelBlock = CreateLabel(Name, Width, Height, TopOffset, LeftOffset)
+    CreateLabel Name, Width, Height, TopOffset, LeftOffset
     CreateInput
-    Self.Value = InitValue
+    If InitValue Then Self.Value = InitValue
 BeforeExit:
 
 End Sub
 
 Public Function Validate() As Boolean
     Dim v As String
-    Dim s As MSForms.CheckBox
+    Dim S As CheckBox
     Select Case True
     Case m_ArgType = "Long"
         v = TextBlock.text
@@ -129,9 +130,9 @@ End Sub
 Private Sub TextBlock_DropButtonClick()
     Dim UF As UserForm
     If TypeOf Parent Is UserForm Then
-        UF = Parent
+        Set UF = Parent
     Else
-        UF = Parent.Parent
+        Set UF = Parent.Parent
     End If
     Dim formula As Variant
     UF.Hide
@@ -142,6 +143,7 @@ NoValue:
     UF.Show vbModal
     On Error GoTo 0
 End Sub
+
 
 Private Sub SelectBlock_Change()
     Debug.Print SelectBlock.Value
@@ -251,3 +253,6 @@ Public Sub CreateInput(ByVal Caption As String, ByVal Place As String, _
     End With
 End Sub
 
+Private Sub Class_Initialize()
+Tip = False
+End Sub

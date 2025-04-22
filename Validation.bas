@@ -71,7 +71,7 @@ Public Sub ValidationUpdate(Payload As String, columnNum As Long, Optional RowsC
     Else: validationString = Payload
     End If
     With ShtMainData.Columns(columnNum)
-        If RowsCount = 0 Then RowsCount = .Rows.count
+        If RowsCount = 0 Then RowsCount = .Rows.Count
         With .Resize(RowsCount - 3).offset(3).Validation
             .Delete
             .Add Type:=xlValidateList, _
@@ -87,14 +87,14 @@ End Sub
 
 Public Sub ValidationClear(columnNum As Long)
     With ShtMainData.Columns(columnNum)
-        .Resize(.Rows.count - 3).offset(3).Validation.Delete
+        .Resize(.Rows.Count - 3).offset(3).Validation.Delete
     End With
 End Sub
 
 Public Function getLastRow(Optional withScroll As Boolean = True) As Range
     With ShtMainData.Cells(1, 1).CurrentRegion
-        Set getLastRow = .Rows(.Rows.count + 1)
-        If withScroll Then Application.GoTo getLastRow, False
+        Set getLastRow = .Rows(.Rows.Count + 1)
+        If withScroll Then Application.Goto getLastRow, False
     End With
 End Function
 

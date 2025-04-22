@@ -8,7 +8,7 @@ Public Function Create() As clsOption
 End Function
 
 Private Sub Class_Initialize()
-    Dim Opt As ClsOptionRow
+    Dim Opt As clsOptionRow
     
 End Sub
 

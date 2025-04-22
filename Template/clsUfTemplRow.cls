@@ -3,7 +3,7 @@ Option Explicit
 
 Public Title As String
 Public Parent As String
-Public Index As Long
+Public index As Long
 Public InitColumn As Long
 Public Func As String
 
@@ -20,20 +20,20 @@ Private Const Width As Long = 60
 Private Const Height As Long = 20
 
 Public Sub Init(CurrPage As MSForms.Page, ByVal RowTitle As String, ByVal RowParent As String, ByVal RowIndex As Long)
-    Index = RowIndex
+    index = RowIndex
     Title = RowTitle
     Parent = RowParent
     Set Page = CurrPage
     Set modifiersList = ModList
     AddLabel
-    Set InitData = AddTextBox(Page, "InitData_" & Parent, Index, Width, Height, , "Номер колонки", True)
+    Set InitData = AddTextBox(Page, "InitData_" & Parent, index, Width, Height, , "Номер колонки", True)
     AddModifier
 End Sub
 
 Private Sub AddLabel(Optional Left As Long = 10)
     With Page
         Set TitleLabel = .Controls.Add("Forms.Label.1", "Label_" & Parent)
-        CtrlDefaultParams TitleLabel, Width, Height, Index * 30 + 10, Left, Title, Index
+        CtrlDefaultParams TitleLabel, Width, Height, index * 30 + 10, Left, Title, index
         TitleLabel.ForeColor = FOREPURPLE
     End With
 End Sub
@@ -42,7 +42,7 @@ Private Sub AddModifier(Optional Left As Long = 150)
     With Page
         Set Modifier = .Controls.Add("Forms.ComboBox.1", "ComboBox_" & Parent)
         Modifier.List = modifiersList.Keys
-        CtrlDefaultParams Modifier, Width, Height, Index * 30 + 10, Left, , Index
+        CtrlDefaultParams Modifier, Width, Height, index * 30 + 10, Left, , index
         Modifier.TextAlign = fmTextAlignLeft
     End With
 End Sub
@@ -53,7 +53,7 @@ Public Function ParseModArg() As Dictionary
     Dim ctrl As Variant
     With Page
         For Each ctrl In .Controls
-            If InStr(ctrl.Name, "Arg_" & Index) = 1 Or InStr(ctrl.Name, "ComboBox_Arg_" & Index) = 1 Then
+            If InStr(ctrl.Name, "Arg_" & index) = 1 Or InStr(ctrl.Name, "ComboBox_Arg_" & index) = 1 Then
                 ParseModArg.Add Split(ctrl.Name, "_")(3), ctrl.text
             End If
         Next
@@ -64,7 +64,7 @@ Private Sub clearModArgs()
     Dim ctrl As Variant
     With Page
         For Each ctrl In .Controls
-            If InStr(ctrl.Name, "Arg_" & Index) Then
+            If InStr(ctrl.Name, "Arg_" & index) Then
                 .Controls.Remove ctrl.Name
             End If
         Next
@@ -120,7 +120,7 @@ Private Sub Modifier_Change()
     'Argument title
     For Each key In args.Keys
         Set modArg = New clsModArg
-        modArg.Add Page, Func, key, args(key)("Type"), args(key)("Optional"), Index, ColIndex, modifiersList, Width, Height
+        modArg.Add Page, Func, key, args(key)("Type"), args(key)("Optional"), index, ColIndex, modifiersList, Width, Height
         modArgs.Add modArg
 BeforeNext:
         ColIndex = ColIndex + 1
@@ -131,3 +131,4 @@ BeforeNext:
     End If
     On Error GoTo 0
 End Sub
+

@@ -41,9 +41,9 @@ Private Property Get Status() As String
     Status = Me.Toolbar.Controls("Label_Status").Caption
 End Property
 
-Private Property Let Status(s As String)
+Private Property Let Status(S As String)
     With Me.Toolbar
-        .Controls("Label_Status").Caption = s
+        .Controls("Label_Status").Caption = S
     End With
 End Property
 
@@ -61,10 +61,10 @@ Private Sub UserForm_Initialize()
 End Sub
 
 'GLOBAL
-Private Sub MultiPages_Layout(ByVal Index As Long)
-    ToolbarUpdate Index
+Private Sub MultiPages_Layout(ByVal index As Long)
+    ToolbarUpdate index
     With Me.MultiPages
-        Select Case Index
+        Select Case index
         Case NumPage.pMain
             MainTemplatesList
         Case NumPage.pProject
@@ -125,6 +125,8 @@ Private Sub SettingsDetails()
 End Sub
 
 Private Sub Button_Git_Push_Click()
+    SwitchAutomation
+    On Error GoTo BeforeExit
     Dim Git As New clsGit
     With Me.MultiPages.Pages(NumPage.pSettings).Controls(Prefix_Git & "Message")
         If Len(.Value) <> 0 Then
@@ -134,13 +136,18 @@ Private Sub Button_Git_Push_Click()
             MsgBox "Нужно указать описание", vbOKOnly, "Описание закрепления"
         End If
     End With
+BeforeExit:
+    SwitchAutomation True
 End Sub
 
 Private Sub Button_Git_Refresh_Click()
+    SwitchAutomation
+    On Error GoTo BeforeExit
     Dim Git As New clsGit
-    Dim done As Boolean
-    done = Git.Pull
-    If done Then Status = "Код обновлен"
+    Git.Pull
+    Status = "Код обновлен"
+BeforeExit:
+    SwitchAutomation True
 End Sub
 
 Private Sub TextBox_Git_Access_Change()

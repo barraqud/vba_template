@@ -193,7 +193,7 @@ BeforeExit:
     On Error GoTo 0
 End Sub
 
-Private Function CommitCreate(message As String, treeSHA As String, parentSHA As String) As String
+Private Sub CommitCreate(message As String, treeSHA As String, parentSHA As String)
     Dim Payload As New Dictionary
     Dim response As Dictionary
     Dim parents As New Collection
@@ -205,7 +205,7 @@ Private Function CommitCreate(message As String, treeSHA As String, parentSHA As
     Set response = fetchAuthorized(setURL("git", "commits"), MPOST, , Payload)
     If response.Exists("message") And Not response.Exists("sha") Then Err.Raise vbObjectError + 106, "ClsGit.CommitCreate", response("message")
     Head.SHA = response("sha")
-End Function
+End Sub
 
 'Git submethods
 'BRANCH
@@ -289,22 +289,22 @@ Private Sub TreeCreate()
     Dim response As Dictionary
     Dim Payload As New Dictionary
     Dim content As String, currSHA As String
-    Dim Comp As Variant
+    Dim comp As Variant
     Dim dict As Dictionary
     Dim comps As New Collection
-    For Each Comp In CodeBase.Components.Items
+    For Each comp In CodeBase.Components.Items
         Set dict = New Dictionary
-        If VBA.VarType(Comp("content")) = vbNull Then
+        If VBA.VarType(comp("content")) = vbNull Then
             dict.Add "sha", Null
         Else
-            content = Comp("content")
+            content = comp("content")
             currSHA = BlobCreate(content)
             If Len(currSHA) = 0 Then GoTo Continue
             dict.Add "sha", currSHA
         End If
-        dict.Add "path", Comp("path")
-        dict.Add "mode", Comp("mode")
-        dict.Add "type", Comp("type")
+        dict.Add "path", comp("path")
+        dict.Add "mode", comp("mode")
+        dict.Add "type", comp("type")
         comps.Add dict
 Continue:
     Next

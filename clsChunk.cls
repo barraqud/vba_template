@@ -5,8 +5,8 @@ Public ID As String
 Public Range As Range
 Public Value As Variant
 
-Public Property Get count() As Long
-    count = Me.Range.Rows.count
+Public Property Get Count() As Long
+    Count = Me.Range.Rows.Count
 End Property
 
 Public Sub Create(ChunkRng As Range)

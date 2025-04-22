@@ -4,8 +4,8 @@ Option Explicit
 Public Chunks As New Dictionary
 Private p_range As Range
 
-Public Property Get count() As Long
-    count = Chunks.count
+Public Property Get Count() As Long
+    Count = Chunks.Count
 End Property
 
 Private Sub Class_Initialize()
@@ -23,14 +23,14 @@ Sub Init(ColNum As Long, Optional ColSize As Long, Optional rng As Range)
     If Not IsMissing(rng) Then Set p_range = rng
     
     With p_range
-        lastRow = .Rows.count + .Row - 1
+        lastRow = .Rows.Count + .Row - 1
         'note: counts rm columns from 1
         Set FilterRng = .Columns(ColNum)
         If ColSize > 1 Then Set FilterRng = FilterRng.Resize(ColumnSize:=ColSize)
         With FilterRng.SpecialCells(xlCellTypeConstants, 7)
             
-            For i = .Areas.count To 1 Step -1
-                Set ChunkRng = .Areas(i).Resize(lastRow - .Areas(i).Row + 1, p_range.Columns.count)
+            For i = .Areas.Count To 1 Step -1
+                Set ChunkRng = .Areas(i).Resize(lastRow - .Areas(i).Row + 1, p_range.Columns.Count)
                 Call Add(ChunkRng)
 
                 lastRow = .Areas(i).Row - 1

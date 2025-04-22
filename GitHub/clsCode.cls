@@ -1,42 +1,27 @@
 '@Folder("GitHub")
 Option Explicit
 
+Private Type TComponentProps
+    cmpName As String
+    cmpType As vbext_ComponentType
+    cmpExt As String
+    dir As String
+    filePath As String
+    isInExclude As Boolean
+    isInComponents As Boolean
+End Type
+
+Private Self As VBIDE.VBProject
 Private Const DirExclude = "Dev"
-Private Const FileExclude = "README"
+Private Const FileExclude = "README;JsonConverter"
 
 Public Components As Dictionary
 'Только пути к старым файлам
 Public OldTree As Dictionary
 
-Private Self As VBIDE.VBProject
-
-Private Function Create(ByVal ModName As String, ByVal content As String) As VBIDE.CodeModule
-    Dim vbComp As VBIDE.VBComponent
-    Dim vbType As vbext_ComponentType
-    vbType = GetModuleType(ModName)
-    Set vbComp = Self.VBComponents.Add(vbType)
-    Dim Name As String
-    Name = GetModuleName(ModName)
-    vbComp.Name = Name
-    Set Create = vbComp.CodeModule
-End Function
-
-Public Sub Update(ByVal ModPath As String, ByVal content As String, Optional clearContent As Boolean = True)
-    Dim vbMod As VBIDE.CodeModule
-    Dim ModName As String
-    ModName = GetModuleName(ModPath)
-    Set vbMod = GetModuleByName(ModName)
-    If vbMod Is Nothing Then Set vbMod = Create(ModName, content)
-    If Err.Number <> 0 Then Exit Sub
-    With vbMod
-        If clearContent Then Call .DeleteLines(1, .CountOfLines)
-        .AddFromString content
-    End With
-End Sub
-
 Public Function Read(ByVal ModName As String, Optional startPos As Long = 1, Optional endPos As Long = 0) As String
     Dim vbMod As VBIDE.CodeModule
-    Set vbMod = GetModuleByName(ModName)
+    Set vbMod = Self.VBComponents(ModName)
     If Err.Number <> 0 Then Exit Function
     With vbMod
         If Not endPos Then endPos = .CountOfLines
@@ -45,7 +30,7 @@ Public Function Read(ByVal ModName As String, Optional startPos As Long = 1, Opt
 End Function
 
 Public Function Find(vbMod As VBIDE.CodeModule, search As String, Optional startPos As Long = 1) As Long
-    Dim s As String
+    Dim S As String
     Dim i As Long
     Dim RE As New RegExp
     RE.Pattern = search
@@ -62,31 +47,75 @@ Public Function Find(vbMod As VBIDE.CodeModule, search As String, Optional start
     End With
 End Function
 
-Public Sub Compare(Optional NewData As Dictionary, Optional isPushing As Boolean = True)
+Public Sub Compare(Optional newData As Dictionary, Optional isPushing As Boolean = True)
     If isPushing Then
-        Set Components = DropOld(NewData, Components)
+        Set Components = ComponentsDropOld(newData, Components)
     Else
-        UpdateAll NewData
-        Init
+        UpdateComponents newData
+        componentsRemove newData
     End If
 End Sub
 
-Private Sub UpdateAll(ByVal ModData As Dictionary)
+'Private
+Private Sub UpdateComponents(ByVal newData As Dictionary)
     Dim key As Variant
-    Dim ModName As String
-    Dim vbMod As VBIDE.CodeModule
-    For Each key In ModData.Keys
-        If CheckExclude(key) Then GoTo Continue
-        Update key, ModData(key)
+    Dim cmp As VBIDE.VBComponent
+    Dim tempProject As Workbook
+    Dim props As TComponentProps
+    On Error GoTo BeforeExit
+    SwitchAutomation
+    
+    Set tempProject = Application.Workbooks.Add
+    For Each key In newData.Keys
+        props = ComponentGetProps(key)
+        If props.isInExclude Then GoTo Continue
+        Set cmp = tempProject.VBProject.VBComponents.Add(props.cmpType)
+        With cmp
+            .Name = props.cmpName
+            With .CodeModule
+                .DeleteLines 1, .CountOfLines
+                .AddFromString newData(key)
+            End With
+            .Export props.filePath
+        End With
+        Set cmp = Nothing
+        On Error Resume Next
+        With Self.VBComponents
+            Set cmp = .Item(props.cmpName)
+            If Not cmp Is Nothing Then .Remove cmp
+            DoEvents
+            .Import props.filePath
+        End With
+        Kill props.filePath
 Continue:
     Next
+    tempProject.Close False
+
+BeforeExit:
+    If Err.Number <> 0 Then Debug.Print "error: "; Err.Number & ", " & Err.Source & ": " & Err.Description
+    SwitchAutomation True
+End Sub
+
+Private Sub componentsRemove(newData As Dictionary)
+    Dim key As Variant
+    Dim cmp As VBIDE.VBComponent
+    Dim props As TComponentProps
+    
+    On Error GoTo Continue
+    SwitchAutomation
     For Each key In Components.Keys
-        If ModData.Exists(key) Or CheckExclude(key) Then GoTo Continue2
-        ModName = GetModuleName(key)
-        Set vbMod = GetModuleByName(ModName) '
-        Self.VBComponents.Remove vbMod.Parent
-Continue2:
+        props = ComponentGetProps(key)
+        If props.isInExclude Then GoTo Continue
+        Debug.Print "not exist: " & props.cmpName
+        With ThisWorkbook.VBProject.VBComponents
+            Set cmp = .Item(props.cmpName)
+            Debug.Print "delete: " & cmp.Name    '.Remove cmp
+        End With
+Continue:
     Next
+BeforeExit:
+    If Err.Number <> 0 Then Debug.Print "error: "; Err.Number & ", " & Err.Source & ": " & Err.Description
+    SwitchAutomation True
 End Sub
 
 Private Sub Init()
@@ -99,123 +128,141 @@ Private Sub Init()
     Components.CompareMode = TextCompare
     Set Self = ActiveWorkbook.VBProject
     For Each vMod In Self.VBComponents
-        If vMod.Type = vbext_ct_ClassModule Or vMod.Type = vbext_ct_StdModule Or vMod.Type = vbext_ct_MSForm Then
-            With vMod.CodeModule
-                content = .Lines(1, .CountOfLines)
-            End With
-            dir = SetModuleDir(content)
-            path = dir & vMod.Name & SetModuleExt(vMod)
-            If CheckExclude(path) Then GoTo Continue
-            Set dict = New Dictionary
-            dict.Add "path", path
-            dict.Add "content", content
-            dict.Add "mode", "100644"
-            dict.Add "type", "blob"
-            Components.Add path, dict
-        End If
+        If vMod.Type <> vbext_ct_ClassModule _
+           And vMod.Type <> vbext_ct_StdModule _
+           And vMod.Type <> vbext_ct_MSForm Then GoTo Continue
+        With vMod.CodeModule
+            content = .Lines(1, .CountOfLines)
+        End With
+        dir = ComponentGetDir(content)
+        path = dir & vMod.Name & ComponentGetExt(vMod)
+        If ComponentIgnore(path) Then GoTo Continue
+        Set dict = New Dictionary
+        dict.Add "path", path
+        dict.Add "content", content
+        dict.Add "mode", "100644"
+        dict.Add "type", "blob"
+        Components.Add path, dict
 Continue:
     Next
 End Sub
 
-Private Function CheckExclude(ByVal ModName As String) As Boolean
+Private Function ComponentIgnore(ByVal cmpPath As String) As Boolean
     Dim RE As New clsRE
     Dim dir As String
-    Dim filename As String
+    Dim fileName As String
     Dim curr As Variant
     Dim ExcludeList As Variant
     RE.Init "(([a-z0-9_-]+)\/)?([a-z0-9_-]+)(\.(bas|cls|frm))", False, True
-    On Error GoTo BeforeExit
-    With RE.ExecuteString(ModName).Item(0).submatches
+    On Error GoTo Exclude
+    With RE.ExecuteString(cmpPath).Item(0).submatches
         dir = .Item(1)
-        filename = .Item(2)
+        fileName = .Item(2)
     End With
-    For Each curr In Split(DirExclude, ";")
-        If InStr(1, dir, curr, vbTextCompare) Then GoTo BeforeExit
-    Next
-    For Each curr In Split(FileExclude, ";")
-        If InStr(1, filename, curr, vbTextCompare) Then GoTo BeforeExit
-    Next
+    ComponentIgnore = ComponentIsExclude(dir, fileName)
     Exit Function
-BeforeExit:
-    CheckExclude = True
-    Exit Function
+Exclude:
+    ComponentIgnore = True
 End Function
 
-Private Function SetModuleDir(Line As String) As String
+Private Function ComponentIsExclude(ByVal dir As String, ByVal cmpName As String) As Boolean
+    Dim curr As Variant
+    On Error GoTo Exclude
+    For Each curr In Split(DirExclude, ";")
+        If InStr(1, dir, curr, vbTextCompare) Then GoTo Exclude
+    Next
+    For Each curr In Split(FileExclude, ";")
+        If InStr(1, cmpName, curr, vbTextCompare) Then GoTo Exclude
+    Next
+    Exit Function
+Exclude:
+    ComponentIsExclude = True
+End Function
+
+Private Function ComponentGetProps(ByVal ComponentPath As String) As TComponentProps
+    Dim RE As New clsRE
+    RE.Init "(([a-z0-9_-]+)\/)?([a-z0-9_-]+)(\.(bas|cls|frm))", False, True
+    With RE.ExecuteString(ComponentPath).Item(0).submatches
+        ComponentGetProps.dir = .Item(1)
+        ComponentGetProps.cmpName = .Item(2)
+        ComponentGetProps.filePath = FilePathCurrent(.Item(2) & .Item(3))
+        ComponentGetProps.cmpExt = .Item(3)
+        ComponentGetProps.cmpType = ComponentGetType(.Item(3))
+        ComponentGetProps.isInExclude = ComponentIsExclude(.Item(1), .Item(2))
+        ComponentGetProps.isInComponents = ComponentIsInOld(.Item(2))
+    End With
+End Function
+
+Private Sub ComponentClearProps(ByRef props As TComponentProps)
+    With props
+        .cmpName = vbNullString
+        .cmpType = Nothing
+        .cmpExt = vbNullString
+        .dir = vbNullString
+        .fileName = vbNullString
+        .isInExclude = False
+        .isInComponents = False
+    End With
+End Sub
+
+Private Function ComponentIsInOld(ByVal cmpName As String) As Boolean
+    Dim cmp As VBIDE.VBComponent
+    On Error Resume Next
+    Set cmp = Self.VBComponents(cmpName)
+    If Not cmp Is Nothing Then ComponentIsInOld = True
+    Err.Clear
+End Function
+
+Private Function ComponentGetDir(Line As String) As String
     Dim Match As String
     Dim RE As New clsRE
     RE.Init "\'\@Folder\(\""(.+)\""\)", False, True
     If Not RE.TestString(Line) Then Exit Function
     On Error GoTo BeforeExit
     Match = RE.ExecuteString(Line).Item(0).submatches.Item(0)
-    If Match <> "VBAProject" Then SetModuleDir = Match & "/"
+    If Match <> "VBAProject" Then ComponentGetDir = Match & "/"
 BeforeExit:
 End Function
 
-Private Function SetModuleExt(ByVal vbMod As VBComponent) As String
+Private Function ComponentGetExt(ByVal vbMod As VBComponent) As String
     Select Case vbMod.Type
-    Case vbext_ct_ClassModule: SetModuleExt = ".cls"
-    Case vbext_ct_StdModule: SetModuleExt = ".bas"
-    Case vbext_ct_MSForm: SetModuleExt = ".frm"
+    Case vbext_ct_ClassModule: ComponentGetExt = ".cls"
+    Case vbext_ct_StdModule: ComponentGetExt = ".bas"
+    Case vbext_ct_MSForm: ComponentGetExt = ".frm"
     Case Else: Exit Function
     End Select
 End Function
 
-Private Function GetModuleType(ByVal ModName As String) As vbext_ComponentType
-    Dim Match As String
-    Dim RE As New clsRE
-    RE.Init ".*(\.(bas|cls|frm))", False, True
-    Match = RE.ExecuteString(ModName).Item(0).submatches.Item(0)
-    Select Case Match
-    Case ".cls":  GetModuleType = vbext_ct_ClassModule
-    Case ".bas":  GetModuleType = vbext_ct_StdModule
-    Case ".frm":  GetModuleType = vbext_ct_MSForm
+Private Function ComponentGetType(ByVal cmpType As String) As vbext_ComponentType
+    Select Case cmpType
+    Case ".cls":  ComponentGetType = vbext_ct_ClassModule
+    Case ".bas":  ComponentGetType = vbext_ct_StdModule
+    Case ".frm":  ComponentGetType = vbext_ct_MSForm
     Case Else: Err.Raise vbObjectError + 500, "clsCode.SetModuleType", "Неправильное расширение файла"
     End Select
 End Function
 
-Public Function GetModuleName(ByVal ModName As String) As String
-    Dim Match As String
-    Dim RE As New clsRE
-    RE.Init "([a-z0-9_-]+\/)?([a-z0-9_-]+)(\.(bas|cls|frm))", False, True
-    GetModuleName = RE.ExecuteString(ModName).Item(0).submatches.Item(1)
-End Function
-
-Public Function GetModuleByName(moduleName As String) As VBIDE.CodeModule
-    Dim project As VBIDE.VBProject
-    Dim curr As Variant
-    Set project = ActiveWorkbook.VBProject
-    For Each curr In project.VBComponents
-        If StrComp(curr.Name, moduleName, vbTextCompare) = 0 And ( _
-           curr.Type = vbext_ct_ClassModule Or curr.Type = vbext_ct_StdModule Or curr.Type = vbext_ct_MSForm _
-           ) Then
-            Set GetModuleByName = curr.CodeModule
-            Exit For
-        End If
-    Next
-End Function
-
-Private Function DropOld(oldDict As Dictionary, newDict As Dictionary) As Dictionary
+Private Function ComponentsDropOld(oldDict As Dictionary, newDict As Dictionary) As Dictionary
     Dim dict As Dictionary
     Dim key As Variant
-    Set DropOld = New Dictionary
+    Set ComponentsDropOld = New Dictionary
     For Each key In oldDict
-        If InStr(1, key, "README", vbTextCompare) Then GoTo Continue
+        If ComponentIgnore(key) Then GoTo Continue
         If newDict.Exists(key) Then
             Set dict = newDict(key)
-            DropOld.Add key, dict
+            ComponentsDropOld.Add key, dict
         Else
             Set dict = New Dictionary
             dict.Add "path", key
             dict.Add "content", Null
             dict.Add "mode", "100644"
             dict.Add "type", "blob"
-            DropOld.Add key, dict
+            ComponentsDropOld.Add key, dict
         End If
 Continue:
     Next
     For Each key In newDict
-        If Not DropOld.Exists(key) And Not InStr(1, key, "README", vbTextCompare) Then DropOld.Add key, newDict(key)
+        If Not ComponentsDropOld.Exists(key) And Not InStr(1, key, "README", vbTextCompare) Then ComponentsDropOld.Add key, newDict(key)
     Next
 End Function
 

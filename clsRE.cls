@@ -17,17 +17,16 @@ Public Function TestString(ByVal sourceString As String) As Boolean
 End Function
 
 Public Function TestArray(ByVal sourceArray As Variant, Optional getIdx As Boolean = False) As Variant
-    Dim outputArr() As Variant
+    Dim outputArr As Variant
     Dim i As Long
-    For i = LBound(sourceArray) To UBound(sourceArray)
-        If Not this.Test(sourceArray(i)) Then GoTo Continue
-        If IsEmpty(outputArr) Then
-            ReDim outputArr(1 To 1)
-        Else
-            ReDim Preserve outputArr(LBound(outputArr) To UBound(outputArr) + 1)
-        End If
-        outputArr(UBound(outputArr)) = True
-        If getIdx Then outputArr(UBound(outputArr)) = i
+    Dim j As Long
+    For j = LBound(sourceArray) To UBound(sourceArray)
+        If Not this.Test(sourceArray(j)) Then GoTo Continue
+        On Error GoTo Continue
+        i = i + 1
+        ReDim Preserve outputArr(1 To i)
+        outputArr(i) = True
+        If getIdx Then outputArr(i) = j
 Continue:
     Next
     TestArray = outputArr
@@ -39,16 +38,16 @@ End Function
 
 Public Function ExecuteArray(ByVal sourceArray As Variant) As Variant
     Dim outputArr As Variant
+    Dim curr As Variant
     Dim i As Long
-    For i = LBound(sourceArray) To UBound(sourceArray)
-        If Not this.Test(sourceArray(i)) Then GoTo Continue
-        If IsEmpty(outputArr) Then
-            ReDim outputArr(1 To 1)
-        Else
-            ReDim Preserve outputArr(LBound(outputArr) To UBound(outputArr) + 1)
-        End If
-        Set outputArr(UBound(outputArr)) = this.Execute(sourceArray(i))
+    For Each curr In sourceArray
+        If Not this.Test(curr) Then GoTo Continue
+        On Error GoTo Continue
+        i = i + 1
+        ReDim Preserve outputArr(1 To i)
+        Set outputArr(i) = this.Execute(curr)
 Continue:
     Next
     ExecuteArray = outputArr
+    On Error GoTo 0
 End Function
