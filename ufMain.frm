@@ -42,9 +42,9 @@ Private Property Get Status() As String
     Status = Me.Toolbar.Controls("Label_Status").Caption
 End Property
 
-Private Property Let Status(S As String)
+Private Property Let Status(s As String)
     With Me.Toolbar
-        .Controls("Label_Status").Caption = S
+        .Controls("Label_Status").Caption = s
     End With
 End Property
 

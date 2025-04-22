@@ -32,6 +32,7 @@ End Sub
 
 Private Sub AddLabel(Optional Left As Long = 10)
     With Page
+        '@Ignore SetAssignmentWithIncompatibleObjectType
         Set TitleLabel = .Controls.Add("Forms.Label.1", "Label_" & Parent)
         CtrlDefaultParams TitleLabel, Width, Height, index * 30 + 10, Left, Title, index
         TitleLabel.ForeColor = FOREPURPLE
@@ -40,6 +41,7 @@ End Sub
 
 Private Sub AddModifier(Optional Left As Long = 150)
     With Page
+        '@Ignore SetAssignmentWithIncompatibleObjectType
         Set Modifier = .Controls.Add("Forms.ComboBox.1", "ComboBox_" & Parent)
         Modifier.List = modifiersList.Keys
         CtrlDefaultParams Modifier, Width, Height, index * 30 + 10, Left, , index
@@ -131,4 +133,3 @@ BeforeNext:
     End If
     On Error GoTo 0
 End Sub
-

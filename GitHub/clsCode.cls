@@ -11,7 +11,7 @@ Private Type TComponentProps
     isInComponents As Boolean
 End Type
 
-Private Self As VBIDE.VBProject
+Private Self As vbide.VBProject
 Private Const DirExclude = "Dev"
 Private Const FileExclude = "README;JsonConverter"
 
@@ -20,8 +20,8 @@ Public Components As Dictionary
 Public OldTree As Dictionary
 
 Public Function Read(ByVal ModName As String, Optional startPos As Long = 1, Optional endPos As Long = 0) As String
-    Dim vbMod As VBIDE.CodeModule
-    Set vbMod = Self.VBComponents(ModName)
+    Dim vbMod As vbide.CodeModule
+    Set vbMod = Self.VBComponents(ModName).CodeModule
     If Err.Number <> 0 Then Exit Function
     With vbMod
         If Not endPos Then endPos = .CountOfLines
@@ -29,8 +29,8 @@ Public Function Read(ByVal ModName As String, Optional startPos As Long = 1, Opt
     End With
 End Function
 
-Public Function Find(vbMod As VBIDE.CodeModule, search As String, Optional startPos As Long = 1) As Long
-    Dim S As String
+Public Function Find(vbMod As vbide.CodeModule, search As String, Optional startPos As Long = 1) As Long
+    Dim s As String
     Dim i As Long
     Dim RE As New RegExp
     RE.Pattern = search
@@ -62,7 +62,7 @@ Private Sub Init()
     Dim dir As String
     Dim path As String
     Dim content As String
-    Dim vMod As Variant
+    Dim vMod As vbide.VBComponent
     Set Components = New Dictionary
     Components.CompareMode = TextCompare
     Set Self = ActiveWorkbook.VBProject
@@ -76,19 +76,24 @@ Private Sub Init()
         dir = ComponentGetDir(content)
         path = dir & vMod.Name & ComponentGetExt(vMod)
         If ComponentIgnore(path) Then GoTo Continue
-        Set dict = New Dictionary
-        dict.Add "path", path
-        dict.Add "content", content
-        dict.Add "mode", "100644"
-        dict.Add "type", "blob"
+        Set dict = ComponentCreatePayload(content, path)
         Components.Add path, dict
 Continue:
     Next
 End Sub
 
+Private Function ComponentCreatePayload(ByVal content As String, ByVal path As String) As Dictionary
+    Set ComponentCreatePayload = New Dictionary
+    ComponentCreatePayload.Add "path", path
+    ComponentCreatePayload.Add "content", content
+    ComponentCreatePayload.Add "mode", "100644"
+    ComponentCreatePayload.Add "type", "blob"
+End Function
+
 Private Sub UpdateComponents(ByVal newData As Dictionary)
     Dim key As Variant
-    Dim cmp As VBIDE.VBComponent
+    Dim cmp As vbide.VBComponent
+    Dim newCmp As vbide.VBComponent
     Dim tempProject As Workbook
     Dim props As TComponentProps
     On Error GoTo BeforeExit
@@ -98,6 +103,14 @@ Private Sub UpdateComponents(ByVal newData As Dictionary)
     For Each key In newData.Keys
         props = ComponentGetProps(key)
         If props.isInExclude Then GoTo Continue
+        If props.cmpType = vbext_ct_MSForm Then
+        Set cmp = Self.VBComponents(cmp.Name)
+        With cmp.CodeModule
+            .DeleteLines 1, .CountOfLines
+            .AddFromString newData(key)
+        End With
+        GoTo Continue
+        End If
         Set cmp = tempProject.VBProject.VBComponents.Add(props.cmpType)
         With cmp
             .Name = props.cmpName
@@ -111,12 +124,12 @@ Private Sub UpdateComponents(ByVal newData As Dictionary)
         On Error Resume Next
         With Self.VBComponents
             Set cmp = .Item(props.cmpName)
-            If Not cmp Is Nothing Then
-                cmp.Name = "DEL_" & props.cmpName
-                DoEvents
-                .Remove cmp
-                DoEvents
-            End If
+            If cmp Is Nothing Then GoTo NoComponent
+            cmp.Name = "DEL_" & props.cmpName
+            DoEvents
+            .Remove cmp
+            DoEvents
+NoComponent:
             .Import props.filePath
         End With
         Kill props.filePath
@@ -134,7 +147,7 @@ End Sub
 
 Private Sub componentsRemove(newData As Dictionary)
     Dim key As Variant
-    Dim cmp As VBIDE.VBComponent
+    Dim cmp As vbide.VBComponent
     Dim props As TComponentProps
     
     On Error GoTo Continue
@@ -215,7 +228,7 @@ Private Sub ComponentClearProps(ByRef props As TComponentProps)
 End Sub
 
 Private Function ComponentIsInOld(ByVal cmpName As String) As Boolean
-    Dim cmp As VBIDE.VBComponent
+    Dim cmp As vbide.VBComponent
     On Error Resume Next
     Set cmp = Self.VBComponents(cmpName)
     If Not cmp Is Nothing Then ComponentIsInOld = True

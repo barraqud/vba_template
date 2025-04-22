@@ -64,7 +64,7 @@ Optional Width As Long = 60, Optional Height As Long = 20, Optional loffset As L
 End Sub
 
 Public Function Validate() As Boolean
-    Dim S As MSForms.CheckBox
+    Dim s As MSForms.CheckBox
     Select Case True
     Case m_ArgType = "Long"
         Validate = IsNumeric(ctrl.text)

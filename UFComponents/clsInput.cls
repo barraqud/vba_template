@@ -95,7 +95,7 @@ End Sub
 
 Public Function Validate() As Boolean
     Dim v As String
-    Dim S As CheckBox
+    Dim s As CheckBox
     Select Case True
     Case m_ArgType = "Long"
         v = TextBlock.text
